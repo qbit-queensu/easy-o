@@ -32,7 +32,7 @@ class MainWindow(ctk.CTk):
         self.ph4_label.grid(row=0, column=3, padx=10, pady=10, sticky="ew")
 
         # settings
-        self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4)
+        self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_popup)
         self.setting_button.grid(row=0, column=4, padx=10, pady=10, sticky="ew")
 
         # spo2
@@ -55,6 +55,17 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
+
+    def open_popup(self):
+        popup = ctk.CTkToplevel(self)
+        popup.title("Popup Window")
+
+        # Add widgets to the popup window
+        popup_label = ctk.CTkLabel(popup, text="This is a popup window.")
+        popup_label.pack(pady=10)
+
+        popup_button = ctk.CTkButton(popup, text="Close Popup", command=popup.destroy)
+        popup_button.pack(pady=5)
  
  
 if __name__ == "__main__":
