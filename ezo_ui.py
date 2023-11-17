@@ -11,7 +11,7 @@ class MainWindow(ctk.CTk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # title and geometry of the main wndow
-        self.title("easy o UI")      
+        self.title("Easy-O UI")      
         # place the window in the middle of the screen
         w = 700
         h = 330
