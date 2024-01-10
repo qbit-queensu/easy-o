@@ -12,9 +12,9 @@ class MainWindow(ctk.CTk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # title and geometry of the main wndow
-        self.title("Easy-O UI")
+        self.title("Easy-O UI")      
         # place the window in the middle of the screen
-        w = 700
+        w = 750
         h = 330
         # get screen width and height
         ws = self.winfo_screenwidth()
@@ -26,7 +26,7 @@ class MainWindow(ctk.CTk):
 
         # creating all the widgets for the main window and displaying them using a grid
         # mode - will change between AUTOMATIC and MANUAL
-        self.mode_label = ctk.CTkLabel(self, text="MODE", text_color="white")
+        self.mode_label = ctk.CTkLabel(self, text="MODE: AUTOMATIC", text_color="white")
         self.mode_label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
         # settings button - opens the settings screen when pushed
         self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
@@ -56,16 +56,16 @@ class MainWindow(ctk.CTk):
         settings = ctk.CTkToplevel(self)
         # title and geomety of the settings screen
         settings.title("Settings")
-        w = 700
+        w = 750
         h= 250
         settings.geometry('%dx%d+%d+%d' % (w, h, self.x, self.y))
 
         # creating the widgets for the pop up screen and displaying them using a grid
         # mode and discription - will change for each mode
-        mode = ctk.CTkLabel(settings, text = "      MODE      ", text_color="white")
-        mode.grid(column=0, row=0, padx=5, pady=5)
-        description = ctk.CTkLabel(settings, text = "DESCRIPTION", text_color="white")
-        description.grid(column=0, row=1, padx=5, pady=5)
+        self.mode = ctk.CTkLabel(settings, text="AUTOMATIC", text_color="white")
+        self.mode.grid(column=0, row=0, padx=5, pady=5)
+        self.description = ctk.CTkLabel(settings, text = "automatic mode description", text_color="white")
+        self.description.grid(column=0, row=1, padx=5, pady=5)
         # spo2 inputs
         init_spo2_label = ctk.CTkLabel(settings, text = "    Init Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
         init_spo2_label.grid(column=0, row=3, padx=2, pady=10)
@@ -105,7 +105,7 @@ class MainWindow(ctk.CTk):
         save_button = ctk.CTkButton(settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=settings.destroy)
         save_button.grid(column=5, row=5, columnspan=2)
         #switches mode
-        mode_switch_button = ctk.CTkButton(settings, text="CHANGE MODE", text_color="white", fg_color="#878788", corner_radius=4)
+        mode_switch_button = ctk.CTkButton(settings, text="CHANGE MODE", text_color="white", fg_color="#878788", corner_radius=4, command=self.change_mode)
         mode_switch_button.grid(row=0, column=6, padx=5, pady=5)
 
         # widgets fitted properly to the window
@@ -113,6 +113,17 @@ class MainWindow(ctk.CTk):
         settings.grid_columnconfigure(1, weight=1)
         settings.grid_columnconfigure(2, weight=1)
         settings.grid_columnconfigure(3, weight=1)
+
+    def change_mode(self):
+        current_mode = self.mode_label.cget("text")
+        if current_mode == "MODE: AUTOMATIC":
+            new_mode = "MODE: MANUAL"
+            self.description.configure(text = "manual mode description")
+        elif current_mode == "MODE: MANUAL":
+            new_mode = "MODE: AUTOMATIC"
+            self.description.configure(text = "automatic mode description")
+        self.mode_label.configure(text=new_mode)
+        self.mode.configure(text = new_mode)
  
 # run the app
 if __name__ == "__main__":
