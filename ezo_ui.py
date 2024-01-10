@@ -3,6 +3,7 @@ import customtkinter as ctk
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
+ctk.set_appearance_mode("dark")
 
 # main window of the UI
 class MainWindow(ctk.CTk):
@@ -11,7 +12,7 @@ class MainWindow(ctk.CTk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # title and geometry of the main wndow
-        self.title("Easy-O UI")      
+        self.title("Easy-O UI")
         # place the window in the middle of the screen
         w = 700
         h = 330
