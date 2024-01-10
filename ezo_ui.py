@@ -3,6 +3,7 @@ import customtkinter as ctk
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
+ctk.set_appearance_mode("dark")
 
 # main window of the UI
 class MainWindow(ctk.CTk):
