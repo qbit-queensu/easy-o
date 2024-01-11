@@ -1,13 +1,47 @@
 # import for custom tkinter
 import customtkinter as ctk
+from tkinter import *
+from threading import *
+import serial
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
 ctk.set_appearance_mode("dark")
 
+class ArduinoThread():
+    # init function, the function that will be run automatically
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.thread = Thread(target = self.work)
+    
+    def start_thread(self):
+        self.thread.start()
+
+    def work(self):
+            serialInst = serial.Serial()
+
+            serialInst.baudrate=9600
+            serialInst.port="/dev/cu.usbmodem11202"
+            serialInst.open()
+
+            valuesArray=[]
+            count=int
+            count=0
+
+            while True:
+                
+                #use this to get data to read on terminal
+                if serialInst.in_waiting:
+                    packet=serialInst.readline()
+                    valuesArray.append(packet.decode('utf').rstrip('\n'))
+                    
+                    #print(packet.decode('utf').rstrip('\n'))
+                    print(valuesArray[count])
+                    count=count+1
+
 # main window of the UI
 class MainWindow(ctk.CTk):
-
 # init function, the function that will be run automatically
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,6 +83,9 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
+
+        self.arduino_thread = ArduinoThread()
+        self.arduino_thread.start_thread()
 
     # function to open the settings
     def open_settings(self):
@@ -124,7 +161,8 @@ class MainWindow(ctk.CTk):
             self.description.configure(text = "automatic mode description")
         self.mode_label.configure(text=new_mode)
         self.mode.configure(text = new_mode)
- 
+        
+        
 # run the app
 if __name__ == "__main__":
     app = MainWindow()
