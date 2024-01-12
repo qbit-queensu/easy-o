@@ -10,10 +10,16 @@ ctk.set_appearance_mode("dark")
 
 class ArduinoThread():
     # init function, the function that will be run automatically
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, app):
+        super().__init__()
         
         self.thread = Thread(target = self.work)
+
+        self.mainwindow = app
+
+        self.spo2 = 0
+        self.fr = 0
+        self.pulse = 0
     
     def start_thread(self):
         self.thread.start()
@@ -22,23 +28,35 @@ class ArduinoThread():
             serialInst = serial.Serial()
 
             serialInst.baudrate=9600
-            serialInst.port="/dev/cu.usbmodem11202"
+            serialInst.port="/dev/cu.usbmodem1202"
             serialInst.open()
-
-            valuesArray=[]
-            count=int
-            count=0
 
             while True:
                 
                 #use this to get data to read on terminal
                 if serialInst.in_waiting:
                     packet=serialInst.readline()
-                    valuesArray.append(packet.decode('utf').rstrip('\n'))
+                    line = packet.decode('utf').rstrip('\n')
                     
-                    #print(packet.decode('utf').rstrip('\n'))
-                    print(valuesArray[count])
-                    count=count+1
+                    readings = line.split(',')
+
+                    for item in readings:
+                        letter, value = item.split(":")
+                        if letter == "O":
+                            self.spo2 = (int(value))
+                        elif letter == "F":
+                            self.fr = (int(value))
+                        elif letter == "P":
+                            self.pulse = (int(value))
+
+                    self.mainwindow.spo2_label.configure(text=self.spo2)
+                    self.mainwindow.fr_label.configure(text=self.fr)
+                    self.mainwindow.pulse_label.configure(text=self.pulse)
+
+                    print("Spo2:", self.spo2)
+                    print("Flowrate:", self.fr)
+                    print("Pulse:", self.pulse)
+
 
 # main window of the UI
 class MainWindow(ctk.CTk):
@@ -84,7 +102,10 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
 
-        self.arduino_thread = ArduinoThread()
+        self.read_arduino()
+
+    def read_arduino(self):   
+        self.arduino_thread = ArduinoThread(self)
         self.arduino_thread.start_thread()
 
     # function to open the settings
@@ -161,6 +182,7 @@ class MainWindow(ctk.CTk):
             self.description.configure(text = "automatic mode description")
         self.mode_label.configure(text=new_mode)
         self.mode.configure(text = new_mode)
+
         
         
 # run the app
