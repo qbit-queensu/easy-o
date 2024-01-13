@@ -8,22 +8,24 @@ import serial
 ctk.set_default_color_theme('dark-blue')
 ctk.set_appearance_mode("dark")
 
+# running the arduino in a seperate thread so that it doesn't interupt the app
 class ArduinoThread():
     # init function, the function that will be run automatically
     def __init__(self, app):
         super().__init__()
-        
         self.thread = Thread(target = self.work)
-
+        # passing the mainwindow into this class so that we can change the text
         self.mainwindow = app
-
+        # initializing reading values
         self.spo2 = 0
         self.fr = 0
         self.pulse = 0
     
+    # starts the thread
     def start_thread(self):
         self.thread.start()
 
+    # the function behind reading the arduinos
     def work(self):
             # begin instant serial monitor
             serialInst = serial.Serial()
@@ -40,7 +42,7 @@ class ArduinoThread():
                     
                     # seperate the readings into 3 seperate readings
                     readings = line.split(',')
-                    
+
                     # assign the different values to their variable 
                     for item in readings:
                         letter, value = item.split(":")
@@ -50,13 +52,13 @@ class ArduinoThread():
                             self.fr = (int(value))
                         elif letter == "P":
                             self.pulse = (int(value))
-
                     
                     # change the text in the mainwindow
                     self.mainwindow.spo2_label.configure(text=self.spo2)
                     self.mainwindow.fr_label.configure(text=self.fr)
                     self.mainwindow.pulse_label.configure(text=self.pulse)
 
+                    # printing the readings
                     print("Spo2:", self.spo2)
                     print("Flowrate:", self.fr)
                     print("Pulse:", self.pulse)
