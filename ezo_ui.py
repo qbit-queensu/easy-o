@@ -25,21 +25,23 @@ class ArduinoThread():
         self.thread.start()
 
     def work(self):
+            # begin instant serial monitor
             serialInst = serial.Serial()
-
             serialInst.baudrate=9600
             serialInst.port="/dev/cu.usbmodem1202"
             serialInst.open()
 
+            # while serial monitor printing values
             while True:
-                
                 #use this to get data to read on terminal
                 if serialInst.in_waiting:
                     packet=serialInst.readline()
                     line = packet.decode('utf').rstrip('\n')
                     
+                    # seperate the readings into 3 seperate readings
                     readings = line.split(',')
-
+                    
+                    # assign the different values to their variable 
                     for item in readings:
                         letter, value = item.split(":")
                         if letter == "O":
@@ -49,6 +51,8 @@ class ArduinoThread():
                         elif letter == "P":
                             self.pulse = (int(value))
 
+                    
+                    # change the text in the mainwindow
                     self.mainwindow.spo2_label.configure(text=self.spo2)
                     self.mainwindow.fr_label.configure(text=self.fr)
                     self.mainwindow.pulse_label.configure(text=self.pulse)
