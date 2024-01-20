@@ -1,5 +1,6 @@
 # import for custom tkinter
 import customtkinter as ctk
+import tkinter as tk
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
@@ -71,39 +72,44 @@ class MainWindow(ctk.CTk):
         init_spo2_label.grid(column=0, row=3, padx=2, pady=10)
         init_spo2_input = ctk.CTkEntry(settings, width=100)
         init_spo2_input.grid(column=1, row=3, padx=2, pady=10)
+        
         min_spo2_label = ctk.CTkLabel(settings, text = "    Min Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         min_spo2_label.grid(column=0, row=4, padx=2, pady=10)
         min_spo2_input = ctk.CTkEntry(settings, width=100)
         min_spo2_input.grid(column=1, row=4, padx=2, pady=10)
+        
         max_spo2_label = ctk.CTkLabel(settings, text = "    Max Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         max_spo2_label.grid(column=0, row=5, padx=2, pady=10)
         max_spo2_input = ctk.CTkEntry(settings, width=100)
         max_spo2_input.grid(column=1, row=5, padx=2, pady=10)
+      
         # flow rate inputs
         init_flow_rate_label = ctk.CTkLabel(settings, text = "Init Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
         init_flow_rate_label.grid(column=2, row=3, padx=2, pady=10)
         init_flow_rate_input = ctk.CTkEntry(settings, width=100)
         init_flow_rate_input.grid(column=3, row=3, padx=2, pady=10)
+        
         min_flow_rate_label = ctk.CTkLabel(settings, text = "Min Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
         min_flow_rate_label.grid(column=2, row=4, padx=2, pady=10)
         min_flow_rate_input = ctk.CTkEntry(settings, width=100)
         min_flow_rate_input.grid(column=3, row=4, padx=2, pady=10)
+        
         max_flow_rate_label = ctk.CTkLabel(settings, text = "Max Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
         max_flow_rate_label.grid(column=2, row=5, padx=2, pady=10)
         max_flow_rate_input = ctk.CTkEntry(settings, width=100)
         max_flow_rate_input.grid(column=3, row=5, padx=2, pady=10)
+        
         # pulse inputs
         min_pulse_label = ctk.CTkLabel(settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         min_pulse_label.grid(column=5, row=3, padx=2, pady=10)
         min_pulse_input = ctk.CTkEntry(settings, width=100)
         min_pulse_input.grid(column=6, row=3, padx=2, pady=10)
+        
         max_pulse_label = ctk.CTkLabel(settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         max_pulse_label.grid(column=5, row=4, padx=2, pady=10)
         max_pulse_input = ctk.CTkEntry(settings, width=100)
         max_pulse_input.grid(column=6, row=4, padx=2, pady=10)
-        # save button - sends the inputted values to the device and exits the settings screen
-        save_button = ctk.CTkButton(settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=settings.destroy)
-        save_button.grid(column=5, row=5, columnspan=2)
+
         #switches mode
         mode_switch_button = ctk.CTkButton(settings, text="CHANGE MODE", text_color="white", fg_color="#878788", corner_radius=4)
         mode_switch_button.grid(row=0, column=6, padx=5, pady=5)
@@ -113,6 +119,22 @@ class MainWindow(ctk.CTk):
         settings.grid_columnconfigure(1, weight=1)
         settings.grid_columnconfigure(2, weight=1)
         settings.grid_columnconfigure(3, weight=1)
+    
+        def save_variables():
+            init_save = init_spo2_input.get(1.0,tk.END).strip()
+            min_save = min_spo2_input.get(1.0,tk.END).strip()
+            max_save = max_spo2_input.get(1.0,tk.END).strip()
+            init_fr_save = init_flow_rate_input.get(1.0,tk.END).strip()
+            min_fr_save = min_flow_rate_input.get(1.0,tk.END).strip()
+            max_fr_save = max_flow_rate_input.get(1.0,tk.END).strip()
+            min_pulse_save = min_pulse_input.get(1.0,tk.END).strip()
+            max_pulse_save = max_pulse_input.get(1.0,tk.END).strip()
+        
+        # save button - sends the inputted values to the device and exits the settings screen
+        save_button = ctk.CTkButton(settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=save_variables)
+        save_button.grid(column=5, row=5, columnspan=2)
+        
+
  
 # run the app
 if __name__ == "__main__":
