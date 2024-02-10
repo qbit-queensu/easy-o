@@ -121,14 +121,16 @@ class MainWindow(ctk.CTk):
         settings.grid_columnconfigure(3, weight=1)
     
         def save_variables():
-            init_save = init_spo2_input.get(1.0,tk.END).strip()
-            min_save = min_spo2_input.get(1.0,tk.END).strip()
-            max_save = max_spo2_input.get(1.0,tk.END).strip()
-            init_fr_save = init_flow_rate_input.get(1.0,tk.END).strip()
-            min_fr_save = min_flow_rate_input.get(1.0,tk.END).strip()
-            max_fr_save = max_flow_rate_input.get(1.0,tk.END).strip()
-            min_pulse_save = min_pulse_input.get(1.0,tk.END).strip()
-            max_pulse_save = max_pulse_input.get(1.0,tk.END).strip()
+            init_save = init_spo2_input.get().strip()
+            # added this to show that the save functionality works 
+            print(init_save)
+            min_save = min_spo2_input.get().strip()
+            max_save = max_spo2_input.get().strip()
+            init_fr_save = init_flow_rate_input.get().strip()
+            min_fr_save = min_flow_rate_input.get().strip()
+            max_fr_save = max_flow_rate_input.get().strip()
+            min_pulse_save = min_pulse_input.get().strip()
+            max_pulse_save = max_pulse_input.get().strip()
         
         # save button - sends the inputted values to the device and exits the settings screen
         save_button = ctk.CTkButton(settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=save_variables)
