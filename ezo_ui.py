@@ -1,5 +1,6 @@
 # import for custom tkinter
 import customtkinter as ctk
+from CTkMessagebox import CTkMessagebox
 from tkinter import *
 from threading import *
 import serial
@@ -204,7 +205,7 @@ class MainWindow(ctk.CTk):
         for key, value in self.parameters.items():
             # if any of the boxes have not been filled, give an error
             if not value:
-                tk.messagebox.showerror("Must add a value for each parameter")
+                CTkMessagebox(title="Error", message="Must add a value for each parameter", button_color="#9eccf4", button_text_color="black", cancel_button="None", icon="warning")
                 return
 
         # close the settings window
