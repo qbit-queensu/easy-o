@@ -1,21 +1,78 @@
 # import for custom tkinter
 import customtkinter as ctk
-import tkinter as tk
+from tkinter import *
+from threading import *
+import serial
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
 ctk.set_appearance_mode("dark")
 
+# running the arduino in a seperate thread so that it doesn't interupt the app
+class ArduinoThread():
+    # init function, the function that will be run automatically
+    def __init__(self, app):
+        super().__init__()
+        self.thread = Thread(target = self.work)
+        # passing the mainwindow into this class so that we can change the text
+        self.mainwindow = app
+        # initializing reading values
+        self.spo2 = 0
+        self.fr = 0
+        self.pulse = 0
+    
+    # starts the thread
+    def start_thread(self):
+        self.thread.start()
+
+    # the function behind reading the arduinos
+    def work(self):
+            # begin instant serial monitor
+            serialInst = serial.Serial()
+            serialInst.baudrate=9600
+            serialInst.port="/dev/cu.usbmodem1202"
+            serialInst.open()
+
+            # while serial monitor printing values
+            while True:
+                #use this to get data to read on terminal
+                if serialInst.in_waiting:
+                    packet=serialInst.readline()
+                    line = packet.decode('utf').rstrip('\n')
+                    
+                    # seperate the readings into 3 seperate readings
+                    readings = line.split(',')
+
+                    # assign the different values to their variable 
+                    for item in readings:
+                        letter, value = item.split(":")
+                        if letter == "O":
+                            self.spo2 = (int(value))
+                        elif letter == "F":
+                            self.fr = (int(value))
+                        elif letter == "P":
+                            self.pulse = (int(value))
+                    
+                    # change the text in the mainwindow
+                    self.mainwindow.spo2_label.configure(text=self.spo2)
+                    self.mainwindow.fr_label.configure(text=self.fr)
+                    self.mainwindow.pulse_label.configure(text=self.pulse)
+
+                    # printing the readings
+                    print("Spo2:", self.spo2)
+                    print("Flowrate:", self.fr)
+                    print("Pulse:", self.pulse)
+
+
 # main window of the UI
 class MainWindow(ctk.CTk):
-
 # init function, the function that will be run automatically
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # title and geometry of the main wndow
-        self.title("Easy-O UI")
+        self.title("Easy-O UI")      
         # place the window in the middle of the screen
-        w = 700
+        w = 750
         h = 330
         # get screen width and height
         ws = self.winfo_screenwidth()
@@ -27,7 +84,7 @@ class MainWindow(ctk.CTk):
 
         # creating all the widgets for the main window and displaying them using a grid
         # mode - will change between AUTOMATIC and MANUAL
-        self.mode_label = ctk.CTkLabel(self, text="MODE", text_color="white")
+        self.mode_label = ctk.CTkLabel(self, text="MODE: AUTOMATIC", text_color="white")
         self.mode_label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
         # settings button - opens the settings screen when pushed
         self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
@@ -51,7 +108,13 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
 
-    # function to open the settings
+        self.read_arduino()
+
+    def read_arduino(self):   
+        self.arduino_thread = ArduinoThread(self)
+        self.arduino_thread.start_thread()
+
+       # function to open the settings
     def open_settings(self):
         # creating the settings window as a pop up
         self.settings = ctk.CTkToplevel(self)
