@@ -110,12 +110,14 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(3, weight=1)
 
         self.read_arduino()
+        self.create_variables()
+        self.settings_created = False
 
     def read_arduino(self):   
         self.arduino_thread = ArduinoThread(self)
         self.arduino_thread.start_thread()
 
-       # function to open the settings
+    # function to open the settings
     def open_settings(self):
         # creating the settings window as a pop up
         self.settings = ctk.CTkToplevel(self)
@@ -135,44 +137,44 @@ class MainWindow(ctk.CTk):
         # spo2 inputs
         self.init_spo2_label = ctk.CTkLabel(self.settings, text = "    Init Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
         self.init_spo2_label.grid(column=0, row=3, padx=2, pady=10)
-        self.init_spo2_input = ctk.CTkEntry(self.settings, width=100)
+        self.init_spo2_input = ctk.CTkEntry(self.settings, placeholder_text=self.parameters['init_spo2_input'], width=100)
         self.init_spo2_input.grid(column=1, row=3, padx=2, pady=10)
         
         self.min_spo2_label = ctk.CTkLabel(self.settings, text = "    Min Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         self.min_spo2_label.grid(column=0, row=4, padx=2, pady=10)
-        self.min_spo2_input = ctk.CTkEntry(self.settings, width=100)
+        self.min_spo2_input = ctk.CTkEntry(self.settings, placeholder_text=self.parameters['min_spo2_input'], width=100)
         self.min_spo2_input.grid(column=1, row=4, padx=2, pady=10)
         
         self.max_spo2_label = ctk.CTkLabel(self.settings, text = "    Max Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         self.max_spo2_label.grid(column=0, row=5, padx=2, pady=10)
-        self.max_spo2_input = ctk.CTkEntry(self.settings, width=100)
+        self.max_spo2_input = ctk.CTkEntry(self.settings, placeholder_text=self.parameters['max_spo2_input'], width=100)
         self.max_spo2_input.grid(column=1, row=5, padx=2, pady=10)
       
         # flow rate inputs
         self.init_flow_rate_label = ctk.CTkLabel(self.settings, text = "Init Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
         self.init_flow_rate_label.grid(column=2, row=3, padx=2, pady=10)
-        self.init_flow_rate_input = ctk.CTkEntry(self.settings, width=100)
+        self.init_flow_rate_input = ctk.CTkEntry(self.settings, placeholder_text=self.parameters['init_flow_rate_input'], width=100)
         self.init_flow_rate_input.grid(column=3, row=3, padx=2, pady=10)
         
         self.min_flow_rate_label = ctk.CTkLabel(self.settings, text = "Min Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
         self.min_flow_rate_label.grid(column=2, row=4, padx=2, pady=10)
-        self.min_flow_rate_input = ctk.CTkEntry(self.settings, width=100)
+        self.min_flow_rate_input = ctk.CTkEntry(self.settings, placeholder_text=self.parameters['min_flow_rate_input'], width=100)
         self.min_flow_rate_input.grid(column=3, row=4, padx=2, pady=10)
         
         self.max_flow_rate_label = ctk.CTkLabel(self.settings, text = "Max Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
         self.max_flow_rate_label.grid(column=2, row=5, padx=2, pady=10)
-        self.max_flow_rate_input = ctk.CTkEntry(self.settings, width=100)
+        self.max_flow_rate_input = ctk.CTkEntry(self.settings, placeholder_text=self.parameters['max_flow_rate_input'],  width=100)
         self.max_flow_rate_input.grid(column=3, row=5, padx=2, pady=10)
         
         # pulse inputs
         self.min_pulse_label = ctk.CTkLabel(self.settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         self.min_pulse_label.grid(column=5, row=3, padx=2, pady=10)
-        self.min_pulse_input = ctk.CTkEntry(self.settings, width=100)
+        self.min_pulse_input = ctk.CTkEntry(self.settings, placeholder_text= self.parameters['min_pulse_input'], width=100)
         self.min_pulse_input.grid(column=6, row=3, padx=2, pady=10)
         
         self.max_pulse_label = ctk.CTkLabel(self.settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
         self.max_pulse_label.grid(column=5, row=4, padx=2, pady=10)
-        self.max_pulse_input = ctk.CTkEntry(self.settings, width=100)
+        self.max_pulse_input = ctk.CTkEntry(self.settings, placeholder_text= self.parameters['max_pulse_input'], width=100)
         self.max_pulse_input.grid(column=6, row=4, padx=2, pady=10)
 
         #switches mode
@@ -180,34 +182,57 @@ class MainWindow(ctk.CTk):
         self.mode_switch_button.grid(row=0, column=6, padx=5, pady=5)
 
         # save button - sends the inputted values to the device and exits the self.settings screen
-        self.save_button = ctk.CTkButton(self.settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.close_settings)
+        self.save_button = ctk.CTkButton(self.settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_variables)
         self.save_button.grid(column=5, row=5, columnspan=2)
+
+        # text box for error messages
+        self.error_message = ctk.CTkLabel(self.settings, text="", text_color="white")
+        self.error_message.grid(column=1, row=6, columnspan=5)
 
         # widgets fitted properly to the window
         self.settings.grid_columnconfigure(0, weight=1)
         self.settings.grid_columnconfigure(1, weight=1)
         self.settings.grid_columnconfigure(2, weight=1)
         self.settings.grid_columnconfigure(3, weight=1)
+
+        self.settings_created = True
     
-    def close_settings(self):
-        # saves the inputted values in a dictionary
+    # create dictionary for parameters
+    def create_variables(self):
         self.parameters = {}
-        self.parameters['init_spo2_input'] = self.init_spo2_input.get().strip()
-        self.parameters['min_spo2_input'] = self.min_spo2_input.get().strip()
-        self.parameters['max_spo2_input'] = self.max_spo2_input.get().strip()
-        self.parameters['init_flow_rate_input'] = self.init_flow_rate_input.get().strip()
-        self.parameters['min_flow_rate_input'] = self.min_flow_rate_input.get().strip()
-        self.parameters['max_flow_rate_input'] = self.max_flow_rate_input.get().strip()
-        self.parameters['min_pulse_input'] = self.min_pulse_input.get().strip()
-        self.parameters['max_pulse_input'] = self.max_pulse_input.get().strip()
+        self.parameters['init_spo2_input'] = ''
+        self.parameters['min_spo2_input'] = ''
+        self.parameters['max_spo2_input'] = ''
+        self.parameters['init_flow_rate_input'] = ''
+        self.parameters['min_flow_rate_input'] = ''
+        self.parameters['max_flow_rate_input'] = ''
+        self.parameters['min_pulse_input'] = ''
+        self.parameters['max_pulse_input'] = ''
+   
+    def save_variables(self):
+        # saves the inputted values in a dictionary
+        parameters_full = False
+        self.parameters = {}
+        self.parameters['init_spo2_input'] = self.init_spo2_input.get()
+        self.parameters['min_spo2_input'] = self.min_spo2_input.get()
+        self.parameters['max_spo2_input'] = self.max_spo2_input.get()
+        self.parameters['init_flow_rate_input'] = self.init_flow_rate_input.get()
+        self.parameters['min_flow_rate_input'] = self.min_flow_rate_input.get()
+        self.parameters['max_flow_rate_input'] = self.max_flow_rate_input.get()
+        self.parameters['min_pulse_input'] = self.min_pulse_input.get()
+        self.parameters['max_pulse_input'] = self.max_pulse_input.get()
 
         # check that all boxes have been filled
-        for key, value in self.parameters.items():
-            # if any of the boxes have not been filled, give an error
-            if not value:
-                CTkMessagebox(title="Error", message="Must add a value for each parameter", button_color="#9eccf4", button_text_color="black", cancel_button="None", icon="warning")
-                return
+        if '' in self.parameters.values():
+            self.error_message.configure(text="Must enter a value for each parameter!")
+        else:
+            parameters_full = True
+    
+        # if there is input for each value, close settings window
+        if parameters_full:
+            self.close_settings()
 
+    def close_settings(self):
         # close the settings window
         self.settings.destroy()
  
