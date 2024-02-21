@@ -88,7 +88,7 @@ class MainWindow(ctk.CTk):
         self.mode_label = ctk.CTkLabel(self, text="MODE: AUTOMATIC", text_color="white")
         self.mode_label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
         # settings button - opens the settings screen when pushed
-        self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
+        self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_auto_settings)
         self.setting_button.grid(row=0, column=4, padx=10, pady=10, sticky="ew")
         # spo2
         self.spo2_label = ctk.CTkLabel(self, text="Spo2:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
@@ -110,96 +110,103 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(3, weight=1)
 
         self.read_arduino()
-        self.settings = None
-        self.settings_created = False
+        self.auto_settings = None
+        self.manual_settings = None
+        self.auto_settings_created = False
 
     def read_arduino(self):   
         self.arduino_thread = ArduinoThread(self)
         self.arduino_thread.start_thread()
 
     # function to open the settings
-    def open_settings(self):
-        if self.settings is None:
+    def open_auto_settings(self):
+        if self.auto_settings is None:
             # creating the settings window as a pop up
-            self.settings = ctk.CTkToplevel(self)
+            self.auto_settings = ctk.CTkToplevel(self)
             # title and geomety of the settings screen
-            self.settings.title("self.settings")
-            w = 700
-            h= 250
-            self.settings.geometry('%dx%d+%d+%d' % (w, h, self.x, self.y))
+            self.auto_settings.title("Automatic Settings")
+            w = 750
+            h= 330
+            self.auto_settings.geometry('%dx%d+%d+%d' % (w, h, self.x, self.y))
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
-            self.mode = ctk.CTkLabel(self.settings, text = "      MODE      ", text_color="white")
-            self.mode.grid(column=0, row=0, padx=5, pady=5)
-            self.description = ctk.CTkLabel(self.settings, text = "DESCRIPTION", text_color="white")
-            self.description.grid(column=0, row=1, padx=5, pady=5)
+            self.mode = ctk.CTkLabel(self.auto_settings, text = "      MODE      ", text_color="white")
+            self.mode.grid(column=0, row=0, padx=5, pady=10)
+            self.description = ctk.CTkLabel(self.auto_settings, text = "DESCRIPTION", text_color="white")
+            self.description.grid(column=0, row=1, padx=5, pady=10)
             
             # spo2 inputs
-            self.init_spo2_label = ctk.CTkLabel(self.settings, text = "    Init Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
+            self.init_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Init Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
             self.init_spo2_label.grid(column=0, row=3, padx=2, pady=10)
-            self.init_spo2_input = ctk.CTkEntry(self.settings, width=100)
+            self.init_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.init_spo2_input.grid(column=1, row=3, padx=2, pady=10)
             
-            self.min_spo2_label = ctk.CTkLabel(self.settings, text = "    Min Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.min_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Min Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_spo2_label.grid(column=0, row=4, padx=2, pady=10)
-            self.min_spo2_input = ctk.CTkEntry(self.settings, width=100)
+            self.min_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_spo2_input.grid(column=1, row=4, padx=2, pady=10)
             
-            self.max_spo2_label = ctk.CTkLabel(self.settings, text = "    Max Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.max_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Max Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_spo2_label.grid(column=0, row=5, padx=2, pady=10)
-            self.max_spo2_input = ctk.CTkEntry(self.settings, width=100)
+            self.max_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.max_spo2_input.grid(column=1, row=5, padx=2, pady=10)
         
             # flow rate inputs
-            self.init_flow_rate_label = ctk.CTkLabel(self.settings, text = "Init Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.init_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Init Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.init_flow_rate_label.grid(column=2, row=3, padx=2, pady=10)
-            self.init_flow_rate_input = ctk.CTkEntry(self.settings, width=100)
+            self.init_flow_rate_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.init_flow_rate_input.grid(column=3, row=3, padx=2, pady=10)
             
-            self.min_flow_rate_label = ctk.CTkLabel(self.settings, text = "Min Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.min_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Min Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_flow_rate_label.grid(column=2, row=4, padx=2, pady=10)
-            self.min_flow_rate_input = ctk.CTkEntry(self.settings, width=100)
+            self.min_flow_rate_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_flow_rate_input.grid(column=3, row=4, padx=2, pady=10)
             
-            self.max_flow_rate_label = ctk.CTkLabel(self.settings, text = "Max Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.max_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Max Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_flow_rate_label.grid(column=2, row=5, padx=2, pady=10)
-            self.max_flow_rate_input = ctk.CTkEntry(self.settings,  width=100)
+            self.max_flow_rate_input = ctk.CTkEntry(self.auto_settings,  width=100)
             self.max_flow_rate_input.grid(column=3, row=5, padx=2, pady=10)
             
             # pulse inputs
-            self.min_pulse_label = ctk.CTkLabel(self.settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.min_pulse_label = ctk.CTkLabel(self.auto_settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_pulse_label.grid(column=5, row=3, padx=2, pady=10)
-            self.min_pulse_input = ctk.CTkEntry(self.settings, width=100)
+            self.min_pulse_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_pulse_input.grid(column=6, row=3, padx=2, pady=10)
             
-            self.max_pulse_label = ctk.CTkLabel(self.settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.max_pulse_label = ctk.CTkLabel(self.auto_settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_pulse_label.grid(column=5, row=4, padx=2, pady=10)
-            self.max_pulse_input = ctk.CTkEntry(self.settings, width=100)
+            self.max_pulse_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.max_pulse_input.grid(column=6, row=4, padx=2, pady=10)
 
-            #switches mode
-            self.mode_switch_button = ctk.CTkButton(self.settings, text="CHANGE MODE", text_color="white", fg_color="#878788", corner_radius=4)
-            self.mode_switch_button.grid(row=0, column=6, padx=5, pady=5)
+            # time interval for evaluaiton
+            self.interval_label = ctk.CTkLabel(self.auto_settings, text = "      Interval     ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.interval_label.grid(column=5, row=5, padx=2, pady=10)
+            self.interval_input = ctk.CTkEntry(self.auto_settings, width=100)
+            self.interval_input.grid(column=6, row=5, padx=2, pady=10)
 
-            # save button - sends the inputted values to the device and exits the self.settings screen
-            self.save_button = ctk.CTkButton(self.settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_variables)
-            self.save_button.grid(column=5, row=5, columnspan=2)
+            #switches mode
+            self.mode_switch_button = ctk.CTkButton(self.auto_settings, text="CHANGE MODE", text_color="white", fg_color="#878788", corner_radius=4)
+            self.mode_switch_button.grid(row=0, column=6, padx=10, pady=10)
+
+            # save button - sends the inputted values to the device and exits the self.auto_settings screen
+            self.save_button = ctk.CTkButton(self.auto_settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_variables)
+            self.save_button.grid(column=5, row=6, columnspan=2, pady=10)
 
             # text box for error messages
-            self.error_message = ctk.CTkLabel(self.settings, text="", text_color="white")
-            self.error_message.grid(column=1, row=6, columnspan=5)
+            self.error_message = ctk.CTkLabel(self.auto_settings, text="", text_color="white")
+            self.error_message.grid(column=1, row=6, columnspan=4, pady=10)
 
             # widgets fitted properly to the window
-            self.settings.grid_columnconfigure(0, weight=1)
-            self.settings.grid_columnconfigure(1, weight=1)
-            self.settings.grid_columnconfigure(2, weight=1)
-            self.settings.grid_columnconfigure(3, weight=1)
+            self.auto_settings.grid_columnconfigure(0, weight=1)
+            self.auto_settings.grid_columnconfigure(1, weight=1)
+            self.auto_settings.grid_columnconfigure(2, weight=1)
+            self.auto_settings.grid_columnconfigure(3, weight=1)
 
-            self.settings_created = True
+            self.auto_settings_created = True
 
         else:
-            self.settings.deiconify()
+            self.auto_settings.deiconify()
    
     def save_variables(self):
         # saves the inputted values in a dictionary
@@ -226,7 +233,7 @@ class MainWindow(ctk.CTk):
 
     def close_settings(self):
         # close the settings window
-        self.settings.withdraw()
+        self.auto_settings.withdraw()
  
 # run the app
 if __name__ == "__main__":
