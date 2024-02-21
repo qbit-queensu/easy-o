@@ -85,20 +85,22 @@ class MainWindow(ctk.CTk):
 
         # creating all the widgets for the main window and displaying them using a grid
         # mode - will change between AUTOMATIC and MANUAL
-        self.mode_label = ctk.CTkLabel(self, text="MODE: AUTOMATIC", text_color="white")
+        self.mode_label = ctk.CTkLabel(self, text="Automatic Mode", text_color="white")
         self.mode_label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        self.mode_button = ctk.CTkButton(self, text="Change Mode", text_color="white", fg_color="#878788", corner_radius=4, command=self.change_mode)
+        self.mode_button.grid(row=1, column=0, padx=10, sticky="ew")
         # settings button - opens the settings screen when pushed
         self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
-        self.setting_button.grid(row=0, column=4, padx=10, pady=10, sticky="ew")
+        self.setting_button.grid(row=0, column=4, padx=10, pady=5, sticky="ew")
         # spo2
         self.spo2_label = ctk.CTkLabel(self, text="Spo2:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
-        self.spo2_label.grid(row=2, column=0, padx=10, pady=20, sticky="ew")
+        self.spo2_label.grid(row=2, column=0, padx=10, pady=5, sticky="ew")
         # flow rate
         self.fr_label = ctk.CTkLabel(self, text="Flow Rate:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
-        self.fr_label.grid(row=3, column=0, padx=10, pady=20, sticky="ew")
+        self.fr_label.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
         # pulse
         self.pulse_label = ctk.CTkLabel(self, text="Pulse:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
-        self.pulse_label.grid(row=4, column=0, padx=10, pady=20, sticky="ew")
+        self.pulse_label.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
         # spo2 graph
         self.spo2_graph = ctk.CTkLabel(self, text="Spo2 graph", text_color="black", fg_color="white", height=250, corner_radius=4)
         self.spo2_graph.grid(row=2, column=1, columnspan=4, rowspan=4, padx=10, pady=20, sticky="ew")
@@ -113,13 +115,22 @@ class MainWindow(ctk.CTk):
         self.auto_settings = None
         self.manual_settings = None
         
-        self.mode = "manual"
+        self.mode = "auto"
 
     # start the arduino thread
     def read_arduino(self):   
         self.arduino_thread = ArduinoThread(self)
         self.arduino_thread.start_thread()
 
+    # change mode
+    def change_mode(self):
+        if self.mode == "auto":
+            self.mode = "manual"
+            self.mode_label.configure(text="Manual Mode")
+        elif self.mode == "manual":
+            self.mode = "auto"
+            self.mode_label.configure(text="Automatic Mode")
+    
     # open settings screen based on chosen mode
     def open_settings(self):
         if self.mode == "auto":
@@ -208,8 +219,6 @@ class MainWindow(ctk.CTk):
             self.auto_settings.grid_columnconfigure(2, weight=1)
             self.auto_settings.grid_columnconfigure(3, weight=1)
 
-            self.auto_settings_created = True
-
         else:
             self.auto_settings.deiconify()
    
@@ -297,8 +306,6 @@ class MainWindow(ctk.CTk):
             self.manual_settings.grid_columnconfigure(2, weight=1)
             self.manual_settings.grid_columnconfigure(3, weight=1)
 
-            self.manual_settings_created = True
-
         else:
             self.manual_settings.deiconify()
 
@@ -317,6 +324,7 @@ class MainWindow(ctk.CTk):
             self.error_message.configure(text="Must enter a value for each parameter!")
         else:
             parameters_full = True
+            self.error_message.configure(text="")
     
         # if there is input for each value, close settings window
         if parameters_full:
@@ -325,7 +333,7 @@ class MainWindow(ctk.CTk):
     # function to close the settings screen
     def close_settings(self, settings):
         # close the settings window
-        self.settings.withdraw()
+        settings.withdraw()
  
 # run the app
 if __name__ == "__main__":
