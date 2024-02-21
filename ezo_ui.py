@@ -1,6 +1,5 @@
 # import for custom tkinter
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 from tkinter import *
 from threading import *
 import serial
@@ -85,10 +84,10 @@ class MainWindow(ctk.CTk):
 
         # creating all the widgets for the main window and displaying them using a grid
         # mode - will change between AUTOMATIC and MANUAL
-        self.mode_label = ctk.CTkLabel(self, text="Automatic Mode", text_color="white")
-        self.mode_label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
-        self.mode_button = ctk.CTkButton(self, text="Change Mode", text_color="white", fg_color="#878788", corner_radius=4, command=self.change_mode)
-        self.mode_button.grid(row=1, column=0, padx=10, sticky="ew")
+        self.main_mode_label = ctk.CTkLabel(self, text="Automatic Mode", text_color="white")
+        self.main_mode_label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        self.main_mode_button = ctk.CTkButton(self, text="Change Mode", text_color="white", fg_color="#878788", corner_radius=4, command=self.change_mode)
+        self.main_mode_button.grid(row=1, column=0, padx=10, sticky="ew")
         # settings button - opens the settings screen when pushed
         self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
         self.setting_button.grid(row=0, column=4, padx=10, pady=5, sticky="ew")
@@ -124,12 +123,13 @@ class MainWindow(ctk.CTk):
 
     # change mode
     def change_mode(self):
+        print(self.mode)
         if self.mode == "auto":
             self.mode = "manual"
-            self.mode_label.configure(text="Manual Mode")
+            self.main_mode_label.configure(text="Manual Mode")
         elif self.mode == "manual":
             self.mode = "auto"
-            self.mode_label.configure(text="Automatic Mode")
+            self.main_mode_label.configure(text="Automatic Mode")
     
     # open settings screen based on chosen mode
     def open_settings(self):
@@ -151,8 +151,8 @@ class MainWindow(ctk.CTk):
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
-            self.mode = ctk.CTkLabel(self.auto_settings, text = "    Automatic    ", text_color="white")
-            self.mode.grid(column=0, row=0, padx=5, pady=5, sticky="ew")
+            self.mode_label = ctk.CTkLabel(self.auto_settings, text = "    Automatic    ", text_color="white")
+            self.mode_label.grid(column=0, row=0, padx=5, pady=5, sticky="ew")
             self.description = ctk.CTkLabel(self.auto_settings, text = "DESCRIPTION", text_color="white")
             self.description.grid(column=0, row=1, padx=5, pady=10, sticky="ew")
             
@@ -219,9 +219,11 @@ class MainWindow(ctk.CTk):
             self.auto_settings.grid_columnconfigure(2, weight=1)
             self.auto_settings.grid_columnconfigure(3, weight=1)
 
+        # if it has already been created, open the screen
         else:
             self.auto_settings.deiconify()
    
+    # save parameters for auto mode
     def save_auto_variables(self):
         # saves the inputted values in a dictionary
         parameters_full = False
@@ -241,6 +243,7 @@ class MainWindow(ctk.CTk):
             self.error_message.configure(text="Must enter a value for each parameter!")
         else:
             parameters_full = True
+            self.error_message.configure(text="")
     
         # if there is input for each value, close settings window
         if parameters_full:
@@ -293,12 +296,12 @@ class MainWindow(ctk.CTk):
             self.m_max_pulse_input.grid(column=6, row=4, padx=4, pady=10, sticky="ew")
 
             # save button - sends the inputted values to the device and exits the self.manual_settings screen
-            self.save_button = ctk.CTkButton(self.manual_settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_manual_variables)
-            self.save_button.grid(column=5, row=6, columnspan=2, pady=10, sticky="ew")
+            self.m_save_button = ctk.CTkButton(self.manual_settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_manual_variables)
+            self.m_save_button.grid(column=5, row=6, columnspan=2, pady=10, sticky="ew")
 
             # text box for error messages
-            self.error_message = ctk.CTkLabel(self.manual_settings, text="", text_color="white")
-            self.error_message.grid(column=1, row=6, columnspan=4, pady=10, sticky="ew")
+            self.m_error_message = ctk.CTkLabel(self.manual_settings, text="", text_color="white")
+            self.m_error_message.grid(column=1, row=6, columnspan=4, pady=10, sticky="ew")
 
             # widgets fitted properly to the window
             self.manual_settings.grid_columnconfigure(0, weight=1)
@@ -306,9 +309,11 @@ class MainWindow(ctk.CTk):
             self.manual_settings.grid_columnconfigure(2, weight=1)
             self.manual_settings.grid_columnconfigure(3, weight=1)
 
+        # if it has already been created, open the screen
         else:
             self.manual_settings.deiconify()
 
+    # save parameters for manual mode
     def save_manual_variables(self):
         # saves the inputted values in a dictionary
         parameters_full = False
@@ -321,10 +326,10 @@ class MainWindow(ctk.CTk):
 
         # check that all boxes have been filled
         if '' in self.m_parameters.values():
-            self.error_message.configure(text="Must enter a value for each parameter!")
+            self.m_error_message.configure(text="Must enter a value for each parameter!")
         else:
             parameters_full = True
-            self.error_message.configure(text="")
+            self.m_error_message.configure(text="")
     
         # if there is input for each value, close settings window
         if parameters_full:
