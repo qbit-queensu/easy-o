@@ -28,16 +28,16 @@ class ArduinoThread():
     # the function behind reading the arduinos
     def work(self):
             # begin instant serial monitor
-            serialInst = serial.Serial()
-            serialInst.baudrate=9600
-            serialInst.port="/dev/cu.usbmodem1202"
-            serialInst.open()
+            self.serial_inst = serial.Serial()
+            self.serial_inst.baudrate=9600
+            self.serial_inst.port="/dev/cu.usbmodem1402"
+            self.serial_inst.open()
 
             # while serial monitor printing values
             while True:
                 #use this to get data to read on terminal
-                if serialInst.in_waiting:
-                    packet=serialInst.readline()
+                if self.serial_inst.in_waiting:
+                    packet = self.serial_inst.readline()
                     line = packet.decode('utf').rstrip('\n')
                     
                     # seperate the readings into 3 seperate readings
@@ -63,6 +63,10 @@ class ArduinoThread():
                     print("Flowrate:", self.fr)
                     print("Pulse:", self.pulse)
 
+    # fucntion to send a value back to the Arduino
+    def write_to_arduino(self, value):
+        self.serial_inst.write(value.encode())
+        
 
 # main window of the UI
 class MainWindow(ctk.CTk):
@@ -110,14 +114,16 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
 
-        self.read_arduino()
         self.auto_settings = None
         self.manual_settings = None
         
         self.mode = "auto"
 
+        # configuring arduino
+        self.arduino_communication()
+
     # start the arduino thread
-    def read_arduino(self):   
+    def arduino_communication(self):   
         self.arduino_thread = ArduinoThread(self)
         self.arduino_thread.start_thread()
 
@@ -244,6 +250,8 @@ class MainWindow(ctk.CTk):
         else:
             parameters_full = True
             self.error_message.configure(text="")
+            # testing writing to arduino
+            self.arduino_thread.write_to_arduino(self.parameters['min_spo2_input'])
     
         # if there is input for each value, close settings window
         if parameters_full:
@@ -330,6 +338,8 @@ class MainWindow(ctk.CTk):
         else:
             parameters_full = True
             self.m_error_message.configure(text="")
+            # testing writing to arduino
+            self.arduino_thread.write_to_arduino(self.m_parameters['m_min_spo2_input'])
     
         # if there is input for each value, close settings window
         if parameters_full:
