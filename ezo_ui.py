@@ -1,12 +1,88 @@
 # import for custom tkinter
 import customtkinter as ctk
-from tkinter import *
+import tkinter as tk
 from threading import *
 import serial
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
 ctk.set_appearance_mode("dark")
+
+# keypad to open when input box pressed
+class CustomKeypad:
+    def __init__(self, main_window, entry):
+        self.main_window = main_window
+        self.entry = entry
+        self.keypad_frame = None
+        self.display_var = tk.StringVar()
+        self.display_var.set('')
+
+    # create the keypad for particular entry box
+    def create_keypad(self):
+        self.update_display()
+        # make a keypad
+        self.keypad_frame = ctk.CTkToplevel(self.main_window)
+        self.keypad_frame.title("Keypad")
+        self.keypad_frame.protocol("WM_DELETE_WINDOW", self.close_keypad)
+
+        # display
+        display = ctk.CTkLabel(self.keypad_frame, textvariable=self.display_var, width=10)
+        display.grid(row=0, column=0, columnspan=3)
+
+        # place the keypad in the middle of the screen
+        self.w = 450
+        self.h = 180
+        # get screen width and height
+        self.ws = self.main_window.ws
+        self.hs = self.main_window.hs
+        # calculate x and y coordinates for the window to open in
+        self.x = (self.ws/2) - (self.w/2)
+        self.y = (self.hs/2) - (self.h/2)
+        self.keypad_frame.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
+
+        # define buttons
+        buttons = [
+            '1', '2', '3',
+            '4', '5', '6',
+            '7', '8', '9',
+            '0', 'Clear', 'Enter'
+        ]
+
+        # dreate buttons
+        row = 1
+        col = 0
+        for button_text in buttons:
+            button = ctk.CTkButton(self.keypad_frame, text=button_text, command=lambda text=button_text: self.on_button_click(text), text_color="white", fg_color="#878788", corner_radius=4)
+            button.grid(row=row, column=col, padx=5, pady=5)
+            col += 1
+            if col > 2:
+                col = 0
+                row += 1
+
+    # update the number display on the keypad
+    def update_display(self):
+        current_text = self.entry.get()
+        self.display_var.set(current_text)
+
+    # connect buttons to function
+    def on_button_click(self, text):
+        if text == 'Clear':
+            self.entry.delete(0, tk.END)
+            self.update_display()
+        elif text == 'Enter':
+            self.close_keypad()
+        else:
+            current_text = self.entry.get()
+            new_text = current_text + text
+            self.entry.delete(0, tk.END)
+            self.entry.insert(0, new_text)
+            self.update_display()
+
+    # hide keypad
+    def close_keypad(self):
+        if self.keypad_frame:
+            self.keypad_frame.destroy()
+
 
 # running the arduino in a seperate thread so that it doesn't interupt the app
 class ArduinoThread():
@@ -32,6 +108,7 @@ class ArduinoThread():
             self.serial_inst.baudrate=9600
             self.serial_inst.port="/dev/cu.usbmodem1402"
             self.serial_inst.open()
+            self.serial_open = True
 
             # while serial monitor printing values
             while True:
@@ -65,8 +142,9 @@ class ArduinoThread():
 
     # fucntion to send a value back to the Arduino
     def write_to_arduino(self, value):
-        self.serial_inst.write(value.encode())
-        
+        # self.serial_inst.write(value.encode())
+        pass
+
 
 # main window of the UI
 class MainWindow(ctk.CTk):
@@ -76,15 +154,15 @@ class MainWindow(ctk.CTk):
         # title and geometry of the main wndow
         self.title("Easy-O UI")      
         # place the window in the middle of the screen
-        w = 750
-        h = 330
+        self.w = 750
+        self.h = 330
         # get screen width and height
-        ws = self.winfo_screenwidth()
-        hs = self.winfo_screenheight()
+        self.ws = self.winfo_screenwidth()
+        self.hs = self.winfo_screenheight()
         # calculate x and y coordinates for the window to open in
-        self.x = (ws/2) - (w/2)
-        self.y = (hs/2) - (h/2)
-        self.geometry('%dx%d+%d+%d' % (w, h, self.x, self.y))
+        self.x = (self.ws/2) - (self.w/2)
+        self.y = (self.hs/2) - (self.h/2)
+        self.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
 
         # creating all the widgets for the main window and displaying them using a grid
         # mode - will change between AUTOMATIC and MANUAL
@@ -119,8 +197,20 @@ class MainWindow(ctk.CTk):
         
         self.mode = "auto"
 
+        # configure dictionary with keypads
+        self.keypads = {}
+
         # configuring arduino
         self.arduino_communication()
+
+    # bind entry box to a keypad
+    def bind_entry_to_keypad(self, entry):
+        entry.bind("<Button-1>", lambda event, entry=entry: self.open_keypad(event, entry))
+
+    # open keypad
+    def open_keypad(self, event, entry):
+        self.keypads[f"{entry}"] = CustomKeypad(self, entry)
+        self.keypads[f"{entry}"].create_keypad()
 
     # start the arduino thread
     def arduino_communication(self):   
@@ -129,7 +219,6 @@ class MainWindow(ctk.CTk):
 
     # change mode
     def change_mode(self):
-        print(self.mode)
         if self.mode == "auto":
             self.mode = "manual"
             self.main_mode_label.configure(text="Manual Mode")
@@ -151,9 +240,7 @@ class MainWindow(ctk.CTk):
             self.auto_settings = ctk.CTkToplevel(self)
             # title and geomety of the settings screen
             self.auto_settings.title("Automatic Settings")
-            w = 750
-            h= 330
-            self.auto_settings.geometry('%dx%d+%d+%d' % (w, h, self.x, self.y))
+            self.auto_settings.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
@@ -167,49 +254,58 @@ class MainWindow(ctk.CTk):
             self.init_spo2_label.grid(column=0, row=3, padx=4, pady=10, sticky="ew")
             self.init_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.init_spo2_input.grid(column=1, row=3, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.init_spo2_input)
             
             self.min_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Min Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_spo2_label.grid(column=0, row=4, padx=4, pady=10, sticky="ew")
             self.min_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_spo2_input.grid(column=1, row=4, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.min_spo2_input)
             
             self.max_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Max Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_spo2_label.grid(column=0, row=5, padx=4, pady=10, sticky="ew")
             self.max_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.max_spo2_input.grid(column=1, row=5, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.max_spo2_input)
         
             # flow rate inputs
             self.init_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Init Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.init_flow_rate_label.grid(column=2, row=3, padx=4, pady=10, sticky="ew")
             self.init_flow_rate_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.init_flow_rate_input.grid(column=3, row=3, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.init_flow_rate_input)
             
             self.min_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Min Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_flow_rate_label.grid(column=2, row=4, padx=4, pady=10, sticky="ew")
             self.min_flow_rate_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_flow_rate_input.grid(column=3, row=4, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.min_flow_rate_input)
             
             self.max_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Max Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_flow_rate_label.grid(column=2, row=5, padx=4, pady=10, sticky="ew")
             self.max_flow_rate_input = ctk.CTkEntry(self.auto_settings,  width=100)
             self.max_flow_rate_input.grid(column=3, row=5, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.max_flow_rate_input)
             
             # pulse inputs
             self.min_pulse_label = ctk.CTkLabel(self.auto_settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_pulse_label.grid(column=5, row=3, padx=4, pady=10, sticky="ew")
             self.min_pulse_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_pulse_input.grid(column=6, row=3, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.min_pulse_input)
             
             self.max_pulse_label = ctk.CTkLabel(self.auto_settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_pulse_label.grid(column=5, row=4, padx=4, pady=10, sticky="ew")
             self.max_pulse_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.max_pulse_input.grid(column=6, row=4, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.max_pulse_input)
 
             # time interval for evaluaiton
             self.interval_label = ctk.CTkLabel(self.auto_settings, text = "       Interval      ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.interval_label.grid(column=5, row=5, padx=4, pady=10, sticky="ew")
             self.interval_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.interval_input.grid(column=6, row=5, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.interval_input)
 
             # save button - sends the inputted values to the device and exits the self.auto_settings screen
             self.save_button = ctk.CTkButton(self.auto_settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_auto_variables)
@@ -280,28 +376,33 @@ class MainWindow(ctk.CTk):
             self.m_min_spo2_label.grid(column=0, row=3, padx=4, pady=10, sticky="ew")
             self.m_min_spo2_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_min_spo2_input.grid(column=1, row=3, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.m_min_spo2_input)
             
             self.m_max_spo2_label = ctk.CTkLabel(self.manual_settings, text = "  Max Spo2  ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_max_spo2_label.grid(column=0, row=4, padx=4, pady=10, sticky="ew")
             self.m_max_spo2_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_max_spo2_input.grid(column=1, row=4, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.m_max_spo2_input)
         
             # flow rate inputs
             self.m_set_flow_rate_label = ctk.CTkLabel(self.manual_settings, text = "  Flow Rate  ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_set_flow_rate_label.grid(column=2, row=3, padx=4, pady=10, sticky="ew")
             self.m_set_flow_rate_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_set_flow_rate_input.grid(column=3, row=3, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.m_set_flow_rate_input)
             
             # pulse inputs
             self.m_min_pulse_label = ctk.CTkLabel(self.manual_settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_min_pulse_label.grid(column=5, row=3, padx=4, pady=10, sticky="ew")
             self.m_min_pulse_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_min_pulse_input.grid(column=6, row=3, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.m_min_pulse_input)
             
             self.m_max_pulse_label = ctk.CTkLabel(self.manual_settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_max_pulse_label.grid(column=5, row=4, padx=4, pady=10, sticky="ew")
             self.m_max_pulse_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_max_pulse_input.grid(column=6, row=4, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.m_max_pulse_input)
 
             # save button - sends the inputted values to the device and exits the self.manual_settings screen
             self.m_save_button = ctk.CTkButton(self.manual_settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_manual_variables)
