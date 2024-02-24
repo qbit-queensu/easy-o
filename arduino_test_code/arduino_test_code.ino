@@ -9,7 +9,7 @@ void loop() {
   
   // Generate random values
   for (int i = 0; i < 3; i++) {
-    values[i] = random(0, 100);  // Generate random values between 0 and 99
+    values[i] = random(10, 30);  // Generate random values between 0 and 99
   }
   
   // Print values in the desired format

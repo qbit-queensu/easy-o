@@ -163,21 +163,17 @@ class PIController():
         while True:
             self.valve_open = self.main_window.valve_open
             self.real_spo2 = self.main_window.current_spo2_value
-            print("real spo2: ", self.real_spo2)
             # calculate error
             error = self.target_spo2 - self.real_spo2
-            print("error:", error)
             # update integral term
             self.integral_sum += error * self.sampling_time
-            print("integral sum:", self.integral_sum)
             # compute control signal
             control_signal = self.Kp * error + self.Ki * self.integral_sum
-            print("control signal:", control_signal)
             # adjust valve open
             self.valve_open += control_signal
             # ensure valve_open stays within 0-100%
             self.valve_open = max(0, min(100, self.valve_open))
-            print(self.valve_open)
+            print("valve open: ", self.valve_open)
             
             # send the updated % valve open back to the main_window
             self.main_window.valve_open_calculation(self.valve_open)
@@ -389,7 +385,7 @@ class MainWindow(ctk.CTk):
         self.parameters['max_pulse_input'] = self.max_pulse_input.get()
         self.parameters['interval_input'] = self.interval_input.get()
 
-        # check that all boxes have been filled
+        # check that all boxes have been filled (function currently off for testing)
         # if '' in self.parameters.values():
         #     self.error_message.configure(text="Must enter a value for each parameter!")
         # else:
