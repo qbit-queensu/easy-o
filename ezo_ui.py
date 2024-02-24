@@ -178,7 +178,7 @@ class PIController():
             print("valve open: ", self.valve_open)
             
             # send the updated % valve open back to the main_window
-            self.main_window.valve_open_calculation(self.valve_open)
+            self.main_window.valve_open_to_arduino(self.valve_open)
             
             # wait until it is new interval for calculation
             time.sleep(self.sampling_time)
@@ -252,6 +252,22 @@ class MainWindow(ctk.CTk):
         # configuring arduino
         self.arduino_communication()
 
+    # calculate % that valve needs to be open based on flow rate
+    def valve_open_calculation(self, flowrate):
+        calculated_valve_open_percent = ((15 - flowrate)/ 15)*100
+        self.valve_open_to_arduino(calculated_valve_open_percent)
+
+    # send valve open percent to the arduino
+    def valve_open_to_arduino(self, valve_percent_open):
+        self.valve_open = valve_percent_open
+        self.arduino_thread.write_to_arduino(self.valve_open)
+        print(valve_percent_open)
+
+    # save the current spo2 readings
+    def current_spo2(self, spo2_value):
+        self.current_spo2_value = int(spo2_value)
+        self.update_plot(self.current_spo2_value)
+    
     # value to update live plot
     def update_plot(self, spo2):
         if len(self.live_spo2_list) < 100:
@@ -389,16 +405,6 @@ class MainWindow(ctk.CTk):
         else:
             self.auto_settings.deiconify()
     
-    # calculate % that valve needs to be open based on flow rate
-    def valve_open_calculation(self, valve_percent_open):
-        self.valve_open = valve_percent_open
-        self.arduino_thread.write_to_arduino(self.valve_open)
-
-    # save the current spo2 readings
-    def current_spo2(self, spo2_value):
-        self.current_spo2_value = int(spo2_value)
-        self.update_plot(self.current_spo2_value)
-    
     # save parameters for auto mode
     def save_auto_variables(self):
         # saves the inputted values in a dictionary
@@ -422,7 +428,8 @@ class MainWindow(ctk.CTk):
         self.error_message.configure(text="")
         
         # calculate the % valve open
-        self.valve_open_calculation(50)
+        self.valve_open_calculation(int(self.parameters['init_flow_rate_input']))
+        
         # make an instance of the PIController
         self.pi_controller = PIController(self, Kp=0.5, Ki=0.1, sampling_time=int(self.parameters['interval_input']), target_spo2=int(self.parameters['target_spo2_input']))
         self.pi_controller.start_thread()
