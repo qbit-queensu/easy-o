@@ -1,6 +1,8 @@
 # import for custom tkinter
 import customtkinter as ctk
 import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 from threading import *
 import serial
 import time
@@ -219,8 +221,16 @@ class MainWindow(ctk.CTk):
         self.pulse_label = ctk.CTkLabel(self, text="Pulse:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.pulse_label.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
         # spo2 graph
-        self.spo2_graph = ctk.CTkLabel(self, text="Spo2 graph", text_color="black", fg_color="white", height=250, corner_radius=4)
-        self.spo2_graph.grid(row=2, column=1, columnspan=4, rowspan=4, padx=10, pady=20, sticky="ew")
+        self.fig, self.ax = plt.subplots(figsize=(1, 1))
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.get_tk_widget().grid(row=1, column=1, columnspan=4, rowspan=4, padx=10, pady=20, sticky="ew")
+        # initialize the line object for the plot
+        self.live_spo2_list = []
+        self.line, = self.ax.plot([], [], "#9eccf4")
+        self.ax.set_xlabel('Time')
+        self.ax.set_ylabel('Spo2')
+        self.ax.set_xlim(0, 100)
+        self.ax.set_ylim(0, 100)
 
         # widgets fitted properly to the window
         self.grid_columnconfigure(0, weight=1)
@@ -228,9 +238,12 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
 
+        # set Nones
         self.auto_settings = None
         self.manual_settings = None
+        self.pi_controller = None
         
+        # set initial mode
         self.mode = "auto"
 
         # configure dictionary with keypads
@@ -239,6 +252,21 @@ class MainWindow(ctk.CTk):
         # configuring arduino
         self.arduino_communication()
 
+    # value to update live plot
+    def update_plot(self, spo2):
+        if len(self.live_spo2_list) < 100:
+            self.live_spo2_list.append(spo2)
+        else:
+            self.live_spo2_list = []
+            self.live_spo2_list.append(spo2)
+        
+        # update the plot data
+        self.line.set_xdata(range(len(self.live_spo2_list)))
+        self.line.set_ydata(self.live_spo2_list)
+
+        # redraw the canvas
+        self.canvas.draw()
+    
     # bind entry box to a keypad
     def bind_entry_to_keypad(self, entry):
         entry.bind("<Button-1>", lambda event, entry=entry: self.open_keypad(event, entry))
@@ -368,7 +396,8 @@ class MainWindow(ctk.CTk):
 
     # save the current spo2 readings
     def current_spo2(self, spo2_value):
-        self.current_spo2_value = spo2_value
+        self.current_spo2_value = int(spo2_value)
+        self.update_plot(self.current_spo2_value)
     
     # save parameters for auto mode
     def save_auto_variables(self):
