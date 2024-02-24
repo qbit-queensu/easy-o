@@ -3,6 +3,7 @@ import customtkinter as ctk
 import tkinter as tk
 from threading import *
 import serial
+import time
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
@@ -132,18 +133,57 @@ class ArduinoThread():
                     
                     # change the text in the mainwindow
                     self.mainwindow.spo2_label.configure(text=self.spo2)
+                    self.mainwindow.current_spo2(self.spo2)
                     self.mainwindow.fr_label.configure(text=self.fr)
                     self.mainwindow.pulse_label.configure(text=self.pulse)
-
-                    # printing the readings
-                    print("Spo2:", self.spo2)
-                    print("Flowrate:", self.fr)
-                    print("Pulse:", self.pulse)
 
     # fucntion to send a value back to the Arduino
     def write_to_arduino(self, value):
         # self.serial_inst.write(value.encode())
         pass
+
+# PI control for the % valve open
+class PIController():
+    def __init__(self, main_window, Kp, Ki, sampling_time, target_spo2):
+        self.thread = Thread(target = self.work)
+        # initializing parameters
+        self.main_window = main_window
+        self.Kp = Kp
+        self.Ki = Ki
+        self.sampling_time = sampling_time
+        self.target_spo2 = target_spo2
+        self.integral_sum = 0
+
+    # starts the thread
+    def start_thread(self):
+        self.thread.start()
+
+    # update the % valve open
+    def work(self):
+        while True:
+            self.valve_open = self.main_window.valve_open
+            self.real_spo2 = self.main_window.current_spo2_value
+            print("real spo2: ", self.real_spo2)
+            # calculate error
+            error = self.target_spo2 - self.real_spo2
+            print("error:", error)
+            # update integral term
+            self.integral_sum += error * self.sampling_time
+            print("integral sum:", self.integral_sum)
+            # compute control signal
+            control_signal = self.Kp * error + self.Ki * self.integral_sum
+            print("control signal:", control_signal)
+            # adjust valve open
+            self.valve_open += control_signal
+            # ensure valve_open stays within 0-100%
+            self.valve_open = max(0, min(100, self.valve_open))
+            print(self.valve_open)
+            
+            # send the updated % valve open back to the main_window
+            self.main_window.valve_open_calculation(self.valve_open)
+            
+            # wait until it is new interval for calculation
+            time.sleep(self.sampling_time)
 
 
 # main window of the UI
@@ -250,11 +290,11 @@ class MainWindow(ctk.CTk):
             self.description.grid(column=0, row=1, padx=5, pady=10, sticky="ew")
             
             # spo2 inputs
-            self.init_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Init Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
-            self.init_spo2_label.grid(column=0, row=3, padx=4, pady=10, sticky="ew")
-            self.init_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
-            self.init_spo2_input.grid(column=1, row=3, padx=4, pady=10, sticky="ew")
-            self.bind_entry_to_keypad(self.init_spo2_input)
+            self.target_spo2_label = ctk.CTkLabel(self.auto_settings, text = "   Target Spo2   ", text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
+            self.target_spo2_label.grid(column=0, row=3, padx=4, pady=10, sticky="ew")
+            self.target_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
+            self.target_spo2_input.grid(column=1, row=3, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.target_spo2_input)
             
             self.min_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Min Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_spo2_label.grid(column=0, row=4, padx=4, pady=10, sticky="ew")
@@ -324,13 +364,22 @@ class MainWindow(ctk.CTk):
         # if it has already been created, open the screen
         else:
             self.auto_settings.deiconify()
-   
+    
+    # calculate % that valve needs to be open based on flow rate
+    def valve_open_calculation(self, valve_percent_open):
+        self.valve_open = valve_percent_open
+        self.arduino_thread.write_to_arduino(self.valve_open)
+
+    # save the current spo2 readings
+    def current_spo2(self, spo2_value):
+        self.current_spo2_value = spo2_value
+    
     # save parameters for auto mode
     def save_auto_variables(self):
         # saves the inputted values in a dictionary
         parameters_full = False
         self.parameters = {}
-        self.parameters['init_spo2_input'] = self.init_spo2_input.get()
+        self.parameters['target_spo2_input'] = self.target_spo2_input.get()
         self.parameters['min_spo2_input'] = self.min_spo2_input.get()
         self.parameters['max_spo2_input'] = self.max_spo2_input.get()
         self.parameters['init_flow_rate_input'] = self.init_flow_rate_input.get()
@@ -341,13 +390,17 @@ class MainWindow(ctk.CTk):
         self.parameters['interval_input'] = self.interval_input.get()
 
         # check that all boxes have been filled
-        if '' in self.parameters.values():
-            self.error_message.configure(text="Must enter a value for each parameter!")
-        else:
-            parameters_full = True
-            self.error_message.configure(text="")
-            # testing writing to arduino
-            self.arduino_thread.write_to_arduino(self.parameters['min_spo2_input'])
+        # if '' in self.parameters.values():
+        #     self.error_message.configure(text="Must enter a value for each parameter!")
+        # else:
+        parameters_full = True
+        self.error_message.configure(text="")
+        
+        # calculate the % valve open
+        self.valve_open_calculation(50)
+        # make an instance of the PIController
+        self.pi_controller = PIController(self, Kp=0.5, Ki=0.1, sampling_time=int(self.parameters['interval_input']), target_spo2=int(self.parameters['target_spo2_input']))
+        self.pi_controller.start_thread()
     
         # if there is input for each value, close settings window
         if parameters_full:
