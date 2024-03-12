@@ -109,7 +109,7 @@ class ArduinoThread():
             # begin instant serial monitor
             self.serial_inst = serial.Serial()
             self.serial_inst.baudrate=9600
-            self.serial_inst.port="/dev/cu.usbmodem1402"
+            self.serial_inst.port="/dev/cu.usbmodem11402"
             self.serial_inst.open()
             self.serial_open = True
 
@@ -123,19 +123,22 @@ class ArduinoThread():
                     # seperate the readings into 3 seperate readings
                     readings = line.split(',')
 
+                    self.spo2_list =[]
+
+
                     # assign the different values to their variable 
                     for item in readings:
                         letter, value = item.split(":")
                         if letter == "O":
-                            self.spo2 = (int(value))
+                            self.spo2 = (float(value))
                         elif letter == "F":
                             self.fr = (int(value))
                         elif letter == "P":
                             self.pulse = (int(value))
                     
-                    # change the text in the mainwindow
-                    self.mainwindow.spo2_label.configure(text=self.spo2)
+                    # change the values in the mainwindow
                     self.mainwindow.current_spo2(self.spo2)
+                    self.mainwindow.spo2_label.configure(text=self.spo2)
                     self.mainwindow.fr_label.configure(text=self.fr)
                     self.mainwindow.pulse_label.configure(text=self.pulse)
 
@@ -163,22 +166,22 @@ class PIController():
     # update the % valve open
     def work(self):
         while True:
-            self.valve_open = self.main_window.valve_open
-            self.real_spo2 = self.main_window.current_spo2_value
-            # calculate error
-            error = self.target_spo2 - self.real_spo2
-            # update integral term
-            self.integral_sum += error * self.sampling_time
-            # compute control signal
-            control_signal = self.Kp * error + self.Ki * self.integral_sum
-            # adjust valve open
-            self.valve_open += control_signal
-            # ensure valve_open stays within 0-100%
-            self.valve_open = max(0, min(100, self.valve_open))
-            print("valve open: ", self.valve_open)
-            
+            # 
+            valve_open = self.main_window.valve_open
+            real_spo2 = self.main_window.current_spo2_value
+            e_prev = 0
+            I = 0
+
+            # algorithm for determining % valve open
+            e = self.target_spo2 - real_spo2
+            P = self.Kp*e
+            I = I + self.Ki*e*(self.sampling_time)
+
+            valve_open = valve_open + P + I
+
             # send the updated % valve open back to the main_window
-            self.main_window.valve_open_to_arduino(self.valve_open)
+            self.main_window.valve_open_to_arduino(valve_open)
+            self.main_window.update_control_plot(real_spo2, valve_open)
             
             # wait until it is new interval for calculation
             time.sleep(self.sampling_time)
@@ -229,8 +232,8 @@ class MainWindow(ctk.CTk):
         self.line, = self.ax.plot([], [], "#9eccf4")
         self.ax.set_xlabel('Time')
         self.ax.set_ylabel('Spo2')
-        self.ax.set_xlim(0, 100)
-        self.ax.set_ylim(0, 100)
+        self.ax.set_xlim(0, 1000)
+        self.ax.set_ylim(-1, 1)
 
         # widgets fitted properly to the window
         self.grid_columnconfigure(0, weight=1)
@@ -240,8 +243,13 @@ class MainWindow(ctk.CTk):
 
         # set Nones
         self.auto_settings = None
+        self.control_plots = None
         self.manual_settings = None
         self.pi_controller = None
+
+        # initialize control lists
+        self.control_live_valve_list = []
+        self.control_live_spo2_list = []
         
         # set initial mode
         self.mode = "auto"
@@ -261,16 +269,15 @@ class MainWindow(ctk.CTk):
     def valve_open_to_arduino(self, valve_percent_open):
         self.valve_open = valve_percent_open
         self.arduino_thread.write_to_arduino(self.valve_open)
-        print(valve_percent_open)
 
     # save the current spo2 readings
     def current_spo2(self, spo2_value):
-        self.current_spo2_value = int(spo2_value)
+        self.current_spo2_value = float(spo2_value)
         self.update_plot(self.current_spo2_value)
     
     # value to update live plot
     def update_plot(self, spo2):
-        if len(self.live_spo2_list) < 100:
+        if len(self.live_spo2_list) < 1000:
             self.live_spo2_list.append(spo2)
         else:
             self.live_spo2_list = []
@@ -426,17 +433,88 @@ class MainWindow(ctk.CTk):
         # else:
         parameters_full = True
         self.error_message.configure(text="")
-        
-        # calculate the % valve open
-        self.valve_open_calculation(int(self.parameters['init_flow_rate_input']))
-        
-        # make an instance of the PIController
-        self.pi_controller = PIController(self, Kp=0.5, Ki=0.1, sampling_time=int(self.parameters['interval_input']), target_spo2=int(self.parameters['target_spo2_input']))
-        self.pi_controller.start_thread()
     
         # if there is input for each value, close settings window
         if parameters_full:
+            # create the plots for monitoring control
+            self.auto_plot()
+
+            # calculate the % valve open
+            self.valve_open_calculation(int(self.parameters['init_flow_rate_input']))
+            # make an instance of the PIController
+            self.pi_controller = PIController(self, Kp=0.5, Ki=0.1, sampling_time=int(self.parameters['interval_input']), target_spo2=int(self.parameters['target_spo2_input']))
+            self.pi_controller.start_thread()
+
+            # close settings window
             self.close_settings(self.auto_settings)
+
+    # making plots for the spo2 and flowrate
+    def auto_plot(self):
+        # create the plots screen if it hasnt been created
+        if self.control_plots is None:
+            # creating the settings window as a pop up
+            self.control_plots = ctk.CTkToplevel(self)
+            # title and geomety of the settings screen
+            self.control_plots.title("Control Plots")
+            # self.control_plots.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
+
+            # create a single figure with two subplots
+            self.control_fig, (self.control_spo2_ax, self.control_valve_ax) = plt.subplots(2, 1)
+
+            # customize the spo2 subplot
+            self.control_spo2_line, = self.control_spo2_ax.plot([], [], "#9eccf4")
+            self.control_spo2_ax.set_title('Spo2')
+            self.control_spo2_ax.set_xlabel('Time')
+            self.control_spo2_ax.set_ylabel('Spo2')
+            self.control_spo2_ax.set_xlim(0, 100)
+            self.control_spo2_ax.set_ylim(-1, 1)
+
+            # customize the valve subplot
+            self.control_valve_line, = self.control_valve_ax.plot([], [], "#9eccf4")
+            self.control_valve_ax.set_title('Valve % Open')
+            self.control_valve_ax.set_xlabel('Time')
+            self.control_valve_ax.set_ylabel('Valve Open')
+            self.control_valve_ax.set_xlim(0, 100)
+            self.control_valve_ax.set_ylim(0, 100)
+
+            # adjust layout to prevent overlap
+            plt.tight_layout()
+
+            # display the figure
+            self.control_canvas = FigureCanvasTkAgg(self.control_fig, master=self.control_plots)
+            self.control_canvas.get_tk_widget().grid(column=0, row=0, columnspan=2, padx=10, pady=10)
+
+            # widgets fitted properly to the window
+            self.control_plots.grid_rowconfigure(0, weight=1)
+            self.control_plots.grid_rowconfigure(1, weight=1)
+
+        # if it has already been created, open the screen
+        else:
+            self.control_plots.deiconify()
+
+        
+    # value to update live plot
+    def update_control_plot(self, spo2, valve_open):
+        # clear the list if it's past 1000
+        if len(self.control_live_spo2_list) < 100:
+            pass
+        else:
+            self.control_live_spo2_list = []
+            self.control_live_valve_list = []
+        
+        # add the new values to the lists
+        self.control_live_spo2_list.append(spo2)
+        self.control_live_valve_list.append(valve_open)
+        
+        # update the plot data
+        self.control_spo2_line.set_xdata(range(len(self.control_live_spo2_list)))
+        self.control_spo2_line.set_ydata(self.control_live_spo2_list)
+        self.control_valve_line.set_xdata(range(len(self.control_live_valve_list)))
+        self.control_valve_line.set_ydata(self.control_live_valve_list)
+
+        # redraw the canvas
+        self.control_canvas.draw()
+
 
     # manual settings screen
     def open_manual_settings(self):

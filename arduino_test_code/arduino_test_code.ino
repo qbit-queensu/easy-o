@@ -1,27 +1,33 @@
-char input;
+char input;  
+float O_value;
+float angle = 0;
 
 void setup() {
   Serial.begin(9600);
 }
 
 void loop() {
-  int values[3];
+  int values[2];
   
   // Generate random values
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 2; i++) {
     values[i] = random(10, 30);  // Generate random values between 0 and 99
   }
   
   // Print values in the desired format
-    Serial.print("F:");
-    Serial.print(values[0]);
-    Serial.print(",");
-    Serial.print("P:");
-    Serial.print(values[1]);
-    Serial.print(",");
-    Serial.print("O:");
-    Serial.print(values[2]);
+  Serial.print("F:");
+  Serial.print(values[0]);
+  Serial.print(",");
+  Serial.print("P:");
+  Serial.print(values[1]);
   
+  O_value = sin(angle);
+
+  Serial.print(",");
+  Serial.print("O:");
+  Serial.print(O_value);
+
+  angle += 0.01;
 
   Serial.print("\n");
   
