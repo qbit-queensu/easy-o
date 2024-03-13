@@ -1,191 +1,17 @@
-# import for custom tkinter
+# module imports
 import customtkinter as ctk
-import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from threading import *
-import serial
-import time
+
+# file imports
+import keypad as kp
+import arduino as ard
+import pid_control as pid
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
 ctk.set_appearance_mode("dark")
-
-# keypad to open when input box pressed
-class CustomKeypad:
-    def __init__(self, main_window, entry):
-        self.main_window = main_window
-        self.entry = entry
-        self.keypad_frame = None
-        self.display_var = tk.StringVar()
-        self.display_var.set('')
-
-    # create the keypad for particular entry box
-    def create_keypad(self):
-        self.update_display()
-        # make a keypad
-        self.keypad_frame = ctk.CTkToplevel(self.main_window)
-        self.keypad_frame.title("Keypad")
-        self.keypad_frame.protocol("WM_DELETE_WINDOW", self.close_keypad)
-
-        # display
-        display = ctk.CTkLabel(self.keypad_frame, textvariable=self.display_var, width=10)
-        display.grid(row=0, column=0, columnspan=3)
-
-        # place the keypad in the middle of the screen
-        self.w = 450
-        self.h = 180
-        # get screen width and height
-        self.ws = self.main_window.ws
-        self.hs = self.main_window.hs
-        # calculate x and y coordinates for the window to open in
-        self.x = (self.ws/2) - (self.w/2)
-        self.y = (self.hs/2) - (self.h/2)
-        self.keypad_frame.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
-
-        # define buttons
-        buttons = [
-            '1', '2', '3',
-            '4', '5', '6',
-            '7', '8', '9',
-            '0', 'Clear', 'Enter'
-        ]
-
-        # dreate buttons
-        row = 1
-        col = 0
-        for button_text in buttons:
-            button = ctk.CTkButton(self.keypad_frame, text=button_text, command=lambda text=button_text: self.on_button_click(text), text_color="white", fg_color="#878788", corner_radius=4)
-            button.grid(row=row, column=col, padx=5, pady=5)
-            col += 1
-            if col > 2:
-                col = 0
-                row += 1
-
-    # update the number display on the keypad
-    def update_display(self):
-        current_text = self.entry.get()
-        self.display_var.set(current_text)
-
-    # connect buttons to function
-    def on_button_click(self, text):
-        if text == 'Clear':
-            self.entry.delete(0, tk.END)
-            self.update_display()
-        elif text == 'Enter':
-            self.close_keypad()
-        else:
-            current_text = self.entry.get()
-            new_text = current_text + text
-            self.entry.delete(0, tk.END)
-            self.entry.insert(0, new_text)
-            self.update_display()
-
-    # hide keypad
-    def close_keypad(self):
-        if self.keypad_frame:
-            self.keypad_frame.destroy()
-
-
-# running the arduino in a seperate thread so that it doesn't interupt the app
-class ArduinoThread():
-    # init function, the function that will be run automatically
-    def __init__(self, app):
-        super().__init__()
-        self.thread = Thread(target = self.work)
-        # passing the mainwindow into this class so that we can change the text
-        self.mainwindow = app
-        # initializing reading values
-        self.spo2 = 0
-        self.fr = 0
-        self.pulse = 0
-    
-    # starts the thread
-    def start_thread(self):
-        self.thread.start()
-
-    # the function behind reading the arduinos
-    def work(self):
-            # begin instant serial monitor
-            self.serial_inst = serial.Serial()
-            self.serial_inst.baudrate=9600
-            self.serial_inst.port="/dev/cu.usbmodem11402"
-            self.serial_inst.open()
-            self.serial_open = True
-
-            # while serial monitor printing values
-            while True:
-                #use this to get data to read on terminal
-                if self.serial_inst.in_waiting:
-                    packet = self.serial_inst.readline()
-                    line = packet.decode('utf').rstrip('\n')
-                    
-                    # seperate the readings into 3 seperate readings
-                    readings = line.split(',')
-
-                    self.spo2_list =[]
-
-
-                    # assign the different values to their variable 
-                    for item in readings:
-                        letter, value = item.split(":")
-                        if letter == "O":
-                            self.spo2 = (float(value))
-                        elif letter == "F":
-                            self.fr = (int(value))
-                        elif letter == "P":
-                            self.pulse = (int(value))
-                    
-                    # change the values in the mainwindow
-                    self.mainwindow.current_spo2(self.spo2)
-                    self.mainwindow.spo2_label.configure(text=self.spo2)
-                    self.mainwindow.fr_label.configure(text=self.fr)
-                    self.mainwindow.pulse_label.configure(text=self.pulse)
-
-    # fucntion to send a value back to the Arduino
-    def write_to_arduino(self, value):
-        # self.serial_inst.write(value.encode())
-        pass
-
-# PI control for the % valve open
-class PIController():
-    def __init__(self, main_window, Kp, Ki, sampling_time, target_spo2):
-        self.thread = Thread(target = self.work)
-        # initializing parameters
-        self.main_window = main_window
-        self.Kp = Kp
-        self.Ki = Ki
-        self.sampling_time = sampling_time
-        self.target_spo2 = target_spo2
-        self.integral_sum = 0
-
-    # starts the thread
-    def start_thread(self):
-        self.thread.start()
-
-    # update the % valve open
-    def work(self):
-        while True:
-            # 
-            valve_open = self.main_window.valve_open
-            real_spo2 = self.main_window.current_spo2_value
-            e_prev = 0
-            I = 0
-
-            # algorithm for determining % valve open
-            e = self.target_spo2 - real_spo2
-            P = self.Kp*e
-            I = I + self.Ki*e*(self.sampling_time)
-
-            valve_open = valve_open + P + I
-
-            # send the updated % valve open back to the main_window
-            self.main_window.valve_open_to_arduino(valve_open)
-            self.main_window.update_control_plot(real_spo2, valve_open)
-            
-            # wait until it is new interval for calculation
-            time.sleep(self.sampling_time)
-
 
 # main window of the UI
 class MainWindow(ctk.CTk):
@@ -296,12 +122,12 @@ class MainWindow(ctk.CTk):
 
     # open keypad
     def open_keypad(self, event, entry):
-        self.keypads[f"{entry}"] = CustomKeypad(self, entry)
+        self.keypads[f"{entry}"] = kp.CustomKeypad(self, entry)
         self.keypads[f"{entry}"].create_keypad()
 
     # start the arduino thread
     def arduino_communication(self):   
-        self.arduino_thread = ArduinoThread(self)
+        self.arduino_thread = ard.ArduinoThread(self)
         self.arduino_thread.start_thread()
 
     # change mode
@@ -442,7 +268,7 @@ class MainWindow(ctk.CTk):
             # calculate the % valve open
             self.valve_open_calculation(int(self.parameters['init_flow_rate_input']))
             # make an instance of the PIController
-            self.pi_controller = PIController(self, Kp=0.5, Ki=0.1, sampling_time=int(self.parameters['interval_input']), target_spo2=int(self.parameters['target_spo2_input']))
+            self.pi_controller = pid.PIController(self, Kp=0.5, Ki=0.1, sampling_time=float(self.parameters['interval_input']), target_spo2=float(self.parameters['target_spo2_input']))
             self.pi_controller.start_thread()
 
             # close settings window
