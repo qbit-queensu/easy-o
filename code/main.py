@@ -22,7 +22,7 @@ class MainWindow(ctk.CTk):
         self.title("Easy-O UI")      
         # place the window in the middle of the screen
         self.w = 750
-        self.h = 330
+        self.h = 300
         # get screen width and height
         self.ws = self.winfo_screenwidth()
         self.hs = self.winfo_screenheight()
@@ -50,14 +50,15 @@ class MainWindow(ctk.CTk):
         self.pulse_label = ctk.CTkLabel(self, text="Pulse:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.pulse_label.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
         # spo2 graph
-        self.fig, self.ax = plt.subplots(figsize=(1, 1))
+        self.fig, self.ax = plt.subplots(figsize=(1.2, 1))
+        plt.subplots_adjust(bottom=0.45, left=0.2)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
         self.canvas.get_tk_widget().grid(row=1, column=1, columnspan=4, rowspan=4, padx=10, pady=20, sticky="ew")
         # initialize the line object for the plot
         self.live_spo2_list = []
         self.line, = self.ax.plot([], [], "#9eccf4")
-        self.ax.set_xlabel('Time')
-        self.ax.set_ylabel('Spo2')
+        self.ax.set_xlabel('Time', fontsize=7)
+        self.ax.set_ylabel('Spo2', fontsize=7)
         self.ax.set_xlim(0, 1000)
         self.ax.set_ylim(-1, 1)
 
@@ -262,6 +263,9 @@ class MainWindow(ctk.CTk):
     
         # if there is input for each value, close settings window
         if parameters_full:
+            # close settings window
+            self.close_window(self.auto_settings)
+
             # create the plots for monitoring control
             self.auto_plot()
 
@@ -270,9 +274,6 @@ class MainWindow(ctk.CTk):
             # make an instance of the PIController
             self.pi_controller = pid.PIController(self, Kp=0.5, Ki=0.1, sampling_time=float(self.parameters['interval_input']), target_spo2=float(self.parameters['target_spo2_input']))
             self.pi_controller.start_thread()
-
-            # close settings window
-            self.close_settings(self.auto_settings)
 
     # making plots for the spo2 and flowrate
     def auto_plot(self):
@@ -285,21 +286,22 @@ class MainWindow(ctk.CTk):
             # self.control_plots.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
 
             # create a single figure with two subplots
-            self.control_fig, (self.control_spo2_ax, self.control_valve_ax) = plt.subplots(2, 1)
+            self.control_fig, (self.control_spo2_ax, self.control_valve_ax) = plt.subplots(2, 1, figsize=(4, 3))
+            plt.subplots_adjust(bottom=0.45, left=0.2)
 
             # customize the spo2 subplot
             self.control_spo2_line, = self.control_spo2_ax.plot([], [], "#9eccf4")
-            self.control_spo2_ax.set_title('Spo2')
-            self.control_spo2_ax.set_xlabel('Time')
-            self.control_spo2_ax.set_ylabel('Spo2')
+            self.control_spo2_ax.set_title('Spo2', fontsize=10)
+            self.control_spo2_ax.set_xlabel('Time', fontsize=7)
+            self.control_spo2_ax.set_ylabel('Spo2', fontsize=7)
             self.control_spo2_ax.set_xlim(0, 100)
             self.control_spo2_ax.set_ylim(-1, 1)
 
             # customize the valve subplot
             self.control_valve_line, = self.control_valve_ax.plot([], [], "#9eccf4")
-            self.control_valve_ax.set_title('Valve % Open')
-            self.control_valve_ax.set_xlabel('Time')
-            self.control_valve_ax.set_ylabel('Valve Open')
+            self.control_valve_ax.set_title('Valve % Open', fontsize=10)
+            self.control_valve_ax.set_xlabel('Time', fontsize=7)
+            self.control_valve_ax.set_ylabel('Valve Open', fontsize=7)
             self.control_valve_ax.set_xlim(0, 100)
             self.control_valve_ax.set_ylim(0, 100)
 
@@ -308,7 +310,11 @@ class MainWindow(ctk.CTk):
 
             # display the figure
             self.control_canvas = FigureCanvasTkAgg(self.control_fig, master=self.control_plots)
-            self.control_canvas.get_tk_widget().grid(column=0, row=0, columnspan=2, padx=10, pady=10)
+            self.control_canvas.get_tk_widget().grid(column=0, row=0, pady=10, padx=10)
+
+            # close button
+            self.close_control_button = ctk.CTkButton(master=self.control_plots, text="Close", text_color="white", fg_color="#878788", corner_radius=4, command=lambda: self.close_window(self.control_plots))
+            self.close_control_button.grid(column=0, row=1, pady=10, padx=10)
 
             # widgets fitted properly to the window
             self.control_plots.grid_rowconfigure(0, weight=1)
@@ -433,10 +439,10 @@ class MainWindow(ctk.CTk):
     
         # if there is input for each value, close settings window
         if parameters_full:
-            self.close_settings(self.manual_settings)
+            self.close_window(self.manual_settings)
 
     # function to close the settings screen
-    def close_settings(self, settings):
+    def close_window(self, settings):
         # close the settings window
         settings.withdraw()
  

@@ -44,7 +44,7 @@ class CustomKeypad:
             '1', '2', '3',
             '4', '5', '6',
             '7', '8', '9',
-            '0', '.', 'Clear',
+            '.', '0', 'Clear',
             'Enter'
         ]
 
@@ -53,7 +53,10 @@ class CustomKeypad:
         col = 0
         for button_text in buttons:
             button = ctk.CTkButton(self.keypad_frame, text=button_text, command=lambda text=button_text: self.on_button_click(text), text_color="white", fg_color="#878788", corner_radius=4)
-            button.grid(row=row, column=col, padx=5, pady=5)
+            if button_text == 'Enter':
+                button.grid(row=row, column=col, columnspan=3, padx=5, pady=5)  # span across 3 columns
+            else:
+                button.grid(row=row, column=col, padx=5, pady=5)
             col += 1
             if col > 2:
                 col = 0
