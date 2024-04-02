@@ -161,15 +161,13 @@ class MainWindow(ctk.CTk):
             self.auto_settings = ctk.CTkToplevel(self)
             # title and geomety of the settings screen
             self.auto_settings.title("Automatic Settings")
-            self.auto_settings.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
+            h = self.h - 50
+            self.auto_settings.geometry('%dx%d+%d+%d' % (self.w, h, self.x, self.y))
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
             self.mode_label = ctk.CTkLabel(self.auto_settings, text = "  Automatic  ", font=self.font, text_color="white")
             self.mode_label.grid(column=0, row=0, padx=5, pady=5, sticky="ew")
-            self.description = ctk.CTkLabel(self.auto_settings, text = "Automatic mode utilizes PI control to automatically change oxygen \n flow rate to bring patient to a desired oxygen saturation. \n Alarm will ring if minimum and maximum pulse, flow rate, or oxygen saturation are reached. ", 
-                                            font=self.font2, text_color="white")
-            self.description.grid(column=0, row=1, columnspan=8, padx=5, pady=10, sticky="ew")
             
             # spo2 inputs
             self.target_spo2_label = ctk.CTkLabel(self.auto_settings, text = "  Target Spo2  ", font=self.font2, text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
@@ -365,15 +363,13 @@ class MainWindow(ctk.CTk):
             self.manual_settings = ctk.CTkToplevel(self)
             # title and geomety of the settings screen
             self.manual_settings.title("Manual Settings")
-            self.manual_settings.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
+            h = self.h - 50
+            self.manual_settings.geometry('%dx%d+%d+%d' % (self.w, h, self.x, self.y))
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
             self.m_mode = ctk.CTkLabel(self.manual_settings, text = "     Manual     ", font=self.font, text_color="white")
             self.m_mode.grid(column=0, row=0, padx=5, pady=10, sticky="ew")
-            self.m_description = ctk.CTkLabel(self.manual_settings, text = "Manual mode remains at a set flowrate. \n Alarm will ring if minimum and maximum pulse, flow rate, or oxygen saturation are reached.", 
-                                              font=self.font2, text_color="white")
-            self.m_description.grid(column=0, row=1, columnspan=8, padx=5, pady=10, sticky="ew")
             
             # spo2 inputs
             self.m_min_spo2_label = ctk.CTkLabel(self.manual_settings, text = "  Min Spo2  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
