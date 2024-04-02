@@ -1,63 +1,69 @@
-# module imports
-from threading import *
+from threading import Thread
 import serial
+import statistics
 
-# running the arduino in a seperate thread so that it doesn't interupt the app
+# reads the arduino and 
 class ArduinoThread():
-    # init function, the function that will be run automatically
     def __init__(self, app):
         super().__init__()
-        self.thread = Thread(target = self.work)
-        # passing the mainwindow into this class so that we can change the text
+        self.thread = Thread(target=self.work)
         self.mainwindow = app
-        # initializing reading values
-        self.spo2 = 0
-        self.fr = 0
-        self.pulse = 0
-    
-    # starts the thread
+        self.spo2_readings = []
+        self.fr_readings = []
+        self.pulse_readings = []
+        self.num_readings_to_average = 10
+
     def start_thread(self):
         self.thread.start()
 
-    # the function behind reading the arduinos
     def work(self):
-            # begin instant serial monitor
-            self.serial_inst = serial.Serial()
-            self.serial_inst.baudrate=9600
-            self.serial_inst.port="/dev/cu.usbmodem11402"
-            self.serial_inst.open()
-            self.serial_open = True
+        self.serial_inst = serial.Serial()
+        self.serial_inst.baudrate = 9600
+        self.serial_inst.port = "/dev/cu.usbmodem11402"
+        self.serial_inst.open()
+        self.serial_open = True
 
-            # while serial monitor printing values
-            while True:
-                #use this to get data to read on terminal
-                if self.serial_inst.in_waiting:
-                    packet = self.serial_inst.readline()
-                    line = packet.decode('utf').rstrip('\n')
-                    
-                    # seperate the readings into 3 seperate readings
-                    readings = line.split(',')
+        while True:
+            if self.serial_inst.in_waiting:
+                packet = self.serial_inst.readline()
+                line = packet.decode('utf').rstrip('\n')
+                
+                readings = line.split(',')
 
-                    self.spo2_list =[]
+                for item in readings:
+                    letter, value = item.split(":")
+                    value = float(value)
+                    if letter == "O":
+                        self.spo2_readings.append(value)
+                    elif letter == "F":
+                        self.fr_readings.append(value)
+                    elif letter == "P":
+                        self.pulse_readings.append(value)
+
+                if len(self.spo2_readings) >= self.num_readings_to_average:
+                    spo2_avg = self.calculate_filtered_average(self.spo2_readings)
+                    self.mainwindow.current_spo2(spo2_avg)
+                    self.mainwindow.spo2_label.configure(text=f'Spo2: {spo2_avg:.2f}')
+                    self.spo2_readings = []
+
+                if len(self.fr_readings) >= self.num_readings_to_average:
+                    fr_avg = self.calculate_filtered_average(self.fr_readings)
+                    self.mainwindow.fr_label.configure(text=f'Flowrate: {fr_avg:.2f}')
+                    self.fr_readings = []
+
+                if len(self.pulse_readings) >= self.num_readings_to_average:
+                    pulse_avg = self.calculate_filtered_average(self.pulse_readings)
+                    self.mainwindow.pulse_label.configure(text=f'Pulse: {pulse_avg:.2f}')
+                    self.pulse_readings = []
+
+    def calculate_filtered_average(self, readings):
+        print(readings)
+        # Filter out outliers using a simple approach like removing values beyond 2 standard deviations
+        filtered_readings = [x for x in readings if abs(x - statistics.mean(readings)) < 2] # line not working properly
+        
+        # Calculate the average of filtered readings
+        return round(statistics.mean(readings), 3)
 
 
-                    # assign the different values to their variable 
-                    for item in readings:
-                        letter, value = item.split(":")
-                        if letter == "O":
-                            self.spo2 = round(float(value), 3)
-                        elif letter == "F":
-                            self.fr = round(float(value), 3)
-                        elif letter == "P":
-                            self.pulse = round(float(value), 3)
-                    
-                    # change the values in the mainwindow
-                    self.mainwindow.current_spo2(self.spo2)
-                    self.mainwindow.spo2_label.configure(text=f'Spo2: {self.spo2}')
-                    self.mainwindow.fr_label.configure(text=f'Flowrate: {self.fr}')
-                    self.mainwindow.pulse_label.configure(text=f'Pulse: {self.pulse}')
-
-    # fucntion to send a value back to the Arduino
     def write_to_arduino(self, value):
-        # self.serial_inst.write(value.encode())
         pass
