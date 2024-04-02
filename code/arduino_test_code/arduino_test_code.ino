@@ -36,13 +36,7 @@ void loop() {
   if(Serial.available()){
         input = Serial.read();
 
-        if (input == 'F') {
-          digitalWrite(LED_BUILTIN, HIGH);
-        }
-        else if (input == 'O') {
-          digitalWrite(LED_BUILTIN, LOW);
-        }
-        else if (input == 'P') {
+        if (input == 'v') {
           for (int i = 0; i < 5; i++) { // Flash 5 times
           digitalWrite(LED_BUILTIN, HIGH); // Turn LED on
           delay(100); // Wait for 100 milliseconds

@@ -57,7 +57,6 @@ class ArduinoThread():
                     self.pulse_readings = []
 
     def calculate_filtered_average(self, readings):
-        print(readings)
         # Filter out outliers using a simple approach like removing values beyond 2 standard deviations
         filtered_readings = [x for x in readings if abs(x - statistics.mean(readings)) < 2] # line not working properly
         
@@ -66,4 +65,8 @@ class ArduinoThread():
 
 
     def write_to_arduino(self, value):
-        pass
+        intro = "valve_open: "
+        valve_value_to_send = str(value)
+        send = intro + valve_value_to_send
+        print(send)
+        self.serial_inst.write(valve_value_to_send.encode())
