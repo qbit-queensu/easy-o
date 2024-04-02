@@ -1,6 +1,8 @@
 char input;  
 float O_value;
 float angle = 0;
+float flow;
+float pulse;
 
 void setup() {
   Serial.begin(9600);
@@ -10,16 +12,15 @@ void loop() {
   int values[2];
   
   // Generate random values
-  for (int i = 0; i < 2; i++) {
-    values[i] = random(10, 30);  // Generate random values between 0 and 99
-  }
+  flow = random(10, 14);
+  pulse = random(60, 80);
   
   // Print values in the desired format
   Serial.print("F:");
-  Serial.print(values[0]);
+  Serial.print(flow);
   Serial.print(",");
   Serial.print("P:");
-  Serial.print(values[1]);
+  Serial.print(pulse);
   
   O_value = sin(angle);
 

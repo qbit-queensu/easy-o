@@ -48,6 +48,7 @@ class ArduinoThread():
 
                 if len(self.fr_readings) >= self.num_readings_to_average:
                     fr_avg = self.calculate_filtered_average(self.fr_readings)
+                    self.mainwindow.current_flowrate(fr_avg)
                     self.mainwindow.fr_label.configure(text=f'Flowrate: {fr_avg:.2f}')
                     self.fr_readings = []
 
@@ -68,5 +69,4 @@ class ArduinoThread():
         intro = "valve_open: "
         valve_value_to_send = str(value)
         send = intro + valve_value_to_send
-        print(send)
         self.serial_inst.write(valve_value_to_send.encode())

@@ -7,7 +7,7 @@ from threading import *
 # file imports
 import keypad as kp
 import arduino as ard
-import pid_control as pid
+import pi_control as pi
 
 # app theme
 ctk.set_default_color_theme('dark-blue')
@@ -44,13 +44,13 @@ class MainWindow(ctk.CTk):
         self.setting_button = ctk.CTkButton(self, text="Settings", font=self.font, text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
         self.setting_button.grid(row=0, column=4, padx=10, pady=5, sticky="ew")
         # spo2
-        self.spo2_label = ctk.CTkLabel(self, text="Spo2:____", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
+        self.spo2_label = ctk.CTkLabel(self, text="Spo2:     ", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.spo2_label.grid(row=2, column=0, padx=10, pady=5, sticky="ew")
         # flow rate
-        self.fr_label = ctk.CTkLabel(self, text="Flow Rate:___", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
+        self.fr_label = ctk.CTkLabel(self, text="Flow Rate:     ", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.fr_label.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
         # pulse
-        self.pulse_label = ctk.CTkLabel(self, text="Pulse:___", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
+        self.pulse_label = ctk.CTkLabel(self, text="Pulse:      ", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.pulse_label.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
         # spo2 graph
         self.fig, self.ax = plt.subplots(figsize=(1.2, 1))
@@ -105,6 +105,9 @@ class MainWindow(ctk.CTk):
     def current_spo2(self, spo2_value):
         self.current_spo2_value = float(spo2_value)
         self.update_plot(self.current_spo2_value)
+
+    def current_flowrate(self, flowrate_value):
+        self.current_flowrate_value = float(flowrate_value)
     
     # value to update live plot
     def update_plot(self, spo2):
@@ -164,8 +167,9 @@ class MainWindow(ctk.CTk):
             # mode and discription - will change for each mode
             self.mode_label = ctk.CTkLabel(self.auto_settings, text = "  Automatic  ", font=self.font, text_color="white")
             self.mode_label.grid(column=0, row=0, padx=5, pady=5, sticky="ew")
-            self.description = ctk.CTkLabel(self.auto_settings, text = "DESCRIPTION", font=self.font, text_color="white")
-            self.description.grid(column=0, row=1, columnspan=6, padx=5, pady=10, sticky="ew")
+            self.description = ctk.CTkLabel(self.auto_settings, text = "Automatic mode utilizes PI control to automatically change oxygen \n flow rate to bring patient to a desired oxygen saturation. \n Alarm will ring if minimum and maximum pulse, flow rate, or oxygen saturation are reached. ", 
+                                            font=self.font2, text_color="white")
+            self.description.grid(column=0, row=1, columnspan=8, padx=5, pady=10, sticky="ew")
             
             # spo2 inputs
             self.target_spo2_label = ctk.CTkLabel(self.auto_settings, text = "  Target Spo2  ", font=self.font2, text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
@@ -263,7 +267,7 @@ class MainWindow(ctk.CTk):
 
         # check that all boxes have been filled (function currently off for testing)
         # if '' in self.parameters.values():
-        #     self.error_message.configure(text="Must enter a value for each parameter!")
+        #     self.error_message.configure(text="Must enter a value for each parameter!", font=self.font)
         # else:
         parameters_full = True
         self.error_message.configure(text="")
@@ -279,7 +283,7 @@ class MainWindow(ctk.CTk):
             # calculate the % valve open
             self.valve_open_calculation(int(self.parameters['init_flow_rate_input']))
             # make an instance of the PIController
-            self.pi_controller = pid.PIController(self, Kp=0.5, Ki=0.1, sampling_time=float(self.parameters['interval_input']), target_spo2=float(self.parameters['target_spo2_input']))
+            self.pi_controller = pi.AutoPIController(self, Kp=0.5, Ki=0.1, sampling_time=float(self.parameters['interval_input']), target_spo2=float(self.parameters['target_spo2_input']))
             self.pi_controller.start_thread()
 
     # making plots for the spo2 and flowrate
@@ -361,16 +365,15 @@ class MainWindow(ctk.CTk):
             self.manual_settings = ctk.CTkToplevel(self)
             # title and geomety of the settings screen
             self.manual_settings.title("Manual Settings")
-            w = 750
-            h= 330
-            self.manual_settings.geometry('%dx%d+%d+%d' % (w, h, self.x, self.y))
+            self.manual_settings.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
             self.m_mode = ctk.CTkLabel(self.manual_settings, text = "     Manual     ", font=self.font, text_color="white")
             self.m_mode.grid(column=0, row=0, padx=5, pady=10, sticky="ew")
-            self.m_description = ctk.CTkLabel(self.manual_settings, text = "DESCRIPTION", font=self.font, text_color="white")
-            self.m_description.grid(column=0, row=1, padx=5, pady=10, sticky="ew")
+            self.m_description = ctk.CTkLabel(self.manual_settings, text = "Manual mode remains at a set flowrate. \n Alarm will ring if minimum and maximum pulse, flow rate, or oxygen saturation are reached.", 
+                                              font=self.font2, text_color="white")
+            self.m_description.grid(column=0, row=1, columnspan=8, padx=5, pady=10, sticky="ew")
             
             # spo2 inputs
             self.m_min_spo2_label = ctk.CTkLabel(self.manual_settings, text = "  Min Spo2  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
@@ -391,6 +394,18 @@ class MainWindow(ctk.CTk):
             self.m_set_flow_rate_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_set_flow_rate_input.grid(column=3, row=3, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.m_set_flow_rate_input)
+
+            self.m_min_flow_rate_label = ctk.CTkLabel(self.manual_settings, text = "  Flow Rate  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.m_min_flow_rate_label.grid(column=2, row=4, padx=4, pady=10, sticky="ew")
+            self.m_min_flow_rate_input = ctk.CTkEntry(self.manual_settings, width=100)
+            self.m_min_flow_rate_input.grid(column=3, row=4, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.m_min_flow_rate_input)
+
+            self.m_max_flow_rate_label = ctk.CTkLabel(self.manual_settings, text = "  Flow Rate  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.m_max_flow_rate_label.grid(column=2, row=5, padx=4, pady=10, sticky="ew")
+            self.m_max_flow_rate_input = ctk.CTkEntry(self.manual_settings, width=100)
+            self.m_max_flow_rate_input.grid(column=3, row=5, padx=4, pady=10, sticky="ew")
+            self.bind_entry_to_keypad(self.m_max_flow_rate_input)
             
             # pulse inputs
             self.m_min_pulse_label = ctk.CTkLabel(self.manual_settings, text = "  Min Pulse  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
@@ -407,17 +422,19 @@ class MainWindow(ctk.CTk):
 
             # save button - sends the inputted values to the device and exits the self.manual_settings screen
             self.m_save_button = ctk.CTkButton(self.manual_settings, text = "Save", text_color="white", font=self.font2,  fg_color="#878788", corner_radius=4, command=self.save_manual_variables)
-            self.m_save_button.grid(column=5, row=6, columnspan=2, pady=10, sticky="ew")
+            self.m_save_button.grid(column=5, row=6, columnspan=2, pady=5, sticky="ew")
 
             # text box for error messages
             self.m_error_message = ctk.CTkLabel(self.manual_settings, text="", text_color="white")
-            self.m_error_message.grid(column=1, row=6, columnspan=4, pady=10, sticky="ew")
+            self.m_error_message.grid(column=1, row=6, columnspan=4, pady=5, sticky="ew")
 
             # widgets fitted properly to the window
             self.manual_settings.grid_columnconfigure(0, weight=1)
             self.manual_settings.grid_columnconfigure(1, weight=1)
             self.manual_settings.grid_columnconfigure(2, weight=1)
             self.manual_settings.grid_columnconfigure(3, weight=1)
+            self.manual_settings.grid_columnconfigure(4, weight=1)
+            self.manual_settings.grid_columnconfigure(5, weight=1)
 
         # if it has already been created, open the screen
         else:
@@ -426,23 +443,29 @@ class MainWindow(ctk.CTk):
     # save parameters for manual mode
     def save_manual_variables(self):
         # saves the inputted values in a dictionary
-        parameters_full = False
+        parameters_full = True
         self.m_parameters = {}
         self.m_parameters['m_min_spo2_input'] = self.m_min_spo2_input.get()
         self.m_parameters['m_max_spo2_input'] = self.m_max_spo2_input.get()
         self.m_parameters['m_set_flow_rate_input'] = self.m_set_flow_rate_input.get()
+        self.m_parameters['m_min_flow_rate_input'] = self.m_min_flow_rate_input.get()
+        self.m_parameters['m_max_flow_rate_input'] = self.m_max_flow_rate_input.get()
         self.m_parameters['m_min_pulse_input'] = self.m_min_pulse_input.get()
         self.m_parameters['m_max_pulse_input'] = self.m_max_pulse_input.get()
 
         # check that all boxes have been filled
-        if '' in self.m_parameters.values():
-            self.m_error_message.configure(text="Must enter a value for each parameter!")
-        else:
-            parameters_full = True
-            self.m_error_message.configure(text="")
-            # testing writing to arduino
-            self.arduino_thread.write_to_arduino(self.m_parameters['m_min_spo2_input'])
+        # if '' in self.m_parameters.values():
+        #     self.m_error_message.configure(text="Must enter a value for each parameter!", font=self.font)
+        # else:
+        #     parameters_full = True
+        #     self.m_error_message.configure(text="")
     
+        # calculate the % valve open
+        self.valve_open_calculation(float(self.m_parameters['m_set_flow_rate_input']))
+        # make an instance of the PIController
+        self.pi_controller = pi.ManualPIController(self, Kp=0.5, Ki=0.1, sampling_time=1, target_flowrate=float(self.m_parameters['m_set_flow_rate_input']))
+        self.pi_controller.start_thread()
+        
         # if there is input for each value, close settings window
         if parameters_full:
             self.close_window(self.manual_settings)
