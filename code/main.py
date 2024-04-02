@@ -32,22 +32,25 @@ class MainWindow(ctk.CTk):
         self.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
 
         # creating all the widgets for the main window and displaying them using a grid
-        # mode - will change between AUTOMATIC and MANUAL
-        self.main_mode_label = ctk.CTkLabel(self, text="Automatic Mode", text_color="white")
+        # font to be used
+        self.font = ('Courier', 15)
+        self.font2 = ('Courier', 12)
+        # main window labels
+        self.main_mode_label = ctk.CTkLabel(self, text="Automatic Mode", font=self.font, text_color="white")
         self.main_mode_label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
-        self.main_mode_button = ctk.CTkButton(self, text="Change Mode", text_color="white", fg_color="#878788", corner_radius=4, command=self.change_mode)
+        self.main_mode_button = ctk.CTkButton(self, text="Change Mode", font=self.font, text_color="white", fg_color="#878788", corner_radius=4, command=self.change_mode)
         self.main_mode_button.grid(row=1, column=0, padx=10, sticky="ew")
         # settings button - opens the settings screen when pushed
-        self.setting_button = ctk.CTkButton(self, text="SETTINGS", text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
+        self.setting_button = ctk.CTkButton(self, text="Settings", font=self.font, text_color="white", fg_color="#878788", corner_radius=4, command=self.open_settings)
         self.setting_button.grid(row=0, column=4, padx=10, pady=5, sticky="ew")
         # spo2
-        self.spo2_label = ctk.CTkLabel(self, text="Spo2:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
+        self.spo2_label = ctk.CTkLabel(self, text="Spo2:____", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.spo2_label.grid(row=2, column=0, padx=10, pady=5, sticky="ew")
         # flow rate
-        self.fr_label = ctk.CTkLabel(self, text="Flow Rate:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
+        self.fr_label = ctk.CTkLabel(self, text="Flow Rate:___", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.fr_label.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
         # pulse
-        self.pulse_label = ctk.CTkLabel(self, text="Pulse:___", text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
+        self.pulse_label = ctk.CTkLabel(self, text="Pulse:___", font=self.font, text_color="black", fg_color="#9eccf4", height=50, corner_radius=4)
         self.pulse_label.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
         # spo2 graph
         self.fig, self.ax = plt.subplots(figsize=(1.2, 1))
@@ -57,16 +60,17 @@ class MainWindow(ctk.CTk):
         # initialize the line object for the plot
         self.live_spo2_list = []
         self.line, = self.ax.plot([], [], "#9eccf4")
-        self.ax.set_xlabel('Time', fontsize=7)
-        self.ax.set_ylabel('Spo2', fontsize=7)
+        self.ax.set_xlabel('Time', fontsize=7, fontname='Courier')
+        self.ax.set_ylabel('Spo2', fontsize=7, fontname='Courier')
         self.ax.set_xlim(0, 1000)
         self.ax.set_ylim(-1, 1)
 
         # widgets fitted properly to the window
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_columnconfigure(2, weight=1)
-        self.grid_columnconfigure(3, weight=1)
+        self.grid_columnconfigure(1, weight=4)
+        self.grid_columnconfigure(2, weight=4)
+        self.grid_columnconfigure(3, weight=4)
+        self.grid_columnconfigure(4, weight=1)
 
         # set Nones
         self.auto_settings = None
@@ -158,75 +162,75 @@ class MainWindow(ctk.CTk):
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
-            self.mode_label = ctk.CTkLabel(self.auto_settings, text = "    Automatic    ", text_color="white")
+            self.mode_label = ctk.CTkLabel(self.auto_settings, text = "  Automatic  ", font=self.font, text_color="white")
             self.mode_label.grid(column=0, row=0, padx=5, pady=5, sticky="ew")
-            self.description = ctk.CTkLabel(self.auto_settings, text = "DESCRIPTION", text_color="white")
-            self.description.grid(column=0, row=1, padx=5, pady=10, sticky="ew")
+            self.description = ctk.CTkLabel(self.auto_settings, text = "DESCRIPTION", font=self.font, text_color="white")
+            self.description.grid(column=0, row=1, columnspan=6, padx=5, pady=10, sticky="ew")
             
             # spo2 inputs
-            self.target_spo2_label = ctk.CTkLabel(self.auto_settings, text = "   Target Spo2   ", text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
+            self.target_spo2_label = ctk.CTkLabel(self.auto_settings, text = "  Target Spo2  ", font=self.font2, text_color="black", fg_color="#9eccf4", corner_radius=4, width=20)
             self.target_spo2_label.grid(column=0, row=3, padx=4, pady=10, sticky="ew")
             self.target_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.target_spo2_input.grid(column=1, row=3, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.target_spo2_input)
             
-            self.min_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Min Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.min_spo2_label = ctk.CTkLabel(self.auto_settings, text = "   Min Spo2   ", font=self.font2, text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_spo2_label.grid(column=0, row=4, padx=4, pady=10, sticky="ew")
             self.min_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_spo2_input.grid(column=1, row=4, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.min_spo2_input)
             
-            self.max_spo2_label = ctk.CTkLabel(self.auto_settings, text = "    Max Spo2    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.max_spo2_label = ctk.CTkLabel(self.auto_settings, text = "   Max Spo2   ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_spo2_label.grid(column=0, row=5, padx=4, pady=10, sticky="ew")
             self.max_spo2_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.max_spo2_input.grid(column=1, row=5, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.max_spo2_input)
         
             # flow rate inputs
-            self.init_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Init Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.init_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = " Init Flow Rate ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.init_flow_rate_label.grid(column=2, row=3, padx=4, pady=10, sticky="ew")
             self.init_flow_rate_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.init_flow_rate_input.grid(column=3, row=3, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.init_flow_rate_input)
             
-            self.min_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Min Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.min_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = " Min Flow Rate ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_flow_rate_label.grid(column=2, row=4, padx=4, pady=10, sticky="ew")
             self.min_flow_rate_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_flow_rate_input.grid(column=3, row=4, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.min_flow_rate_input)
             
-            self.max_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = "Max Flow Rate", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.max_flow_rate_label = ctk.CTkLabel(self.auto_settings, text = " Max Flow Rate ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_flow_rate_label.grid(column=2, row=5, padx=4, pady=10, sticky="ew")
             self.max_flow_rate_input = ctk.CTkEntry(self.auto_settings,  width=100)
             self.max_flow_rate_input.grid(column=3, row=5, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.max_flow_rate_input)
             
             # pulse inputs
-            self.min_pulse_label = ctk.CTkLabel(self.auto_settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.min_pulse_label = ctk.CTkLabel(self.auto_settings, text = "  Min Pulse  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.min_pulse_label.grid(column=5, row=3, padx=4, pady=10, sticky="ew")
             self.min_pulse_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.min_pulse_input.grid(column=6, row=3, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.min_pulse_input)
             
-            self.max_pulse_label = ctk.CTkLabel(self.auto_settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.max_pulse_label = ctk.CTkLabel(self.auto_settings, text = "  Max Pulse  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.max_pulse_label.grid(column=5, row=4, padx=4, pady=10, sticky="ew")
             self.max_pulse_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.max_pulse_input.grid(column=6, row=4, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.max_pulse_input)
 
             # time interval for evaluaiton
-            self.interval_label = ctk.CTkLabel(self.auto_settings, text = "       Interval      ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.interval_label = ctk.CTkLabel(self.auto_settings, text = "   Interval  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.interval_label.grid(column=5, row=5, padx=4, pady=10, sticky="ew")
             self.interval_input = ctk.CTkEntry(self.auto_settings, width=100)
             self.interval_input.grid(column=6, row=5, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.interval_input)
 
             # save button - sends the inputted values to the device and exits the self.auto_settings screen
-            self.save_button = ctk.CTkButton(self.auto_settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_auto_variables)
+            self.save_button = ctk.CTkButton(self.auto_settings, text = "Save", text_color="white", font=self.font,  fg_color="#878788", corner_radius=4, command=self.save_auto_variables)
             self.save_button.grid(column=6, row=6, columnspan=1, padx=4, pady=10, sticky="ew")
 
             # text box for error messages
-            self.error_message = ctk.CTkLabel(self.auto_settings, text="", text_color="white")
+            self.error_message = ctk.CTkLabel(self.auto_settings, text="", text_color="white", font=self.font)
             self.error_message.grid(column=1, row=6, columnspan=4, pady=2)
 
             # widgets fitted properly to the window
@@ -234,6 +238,9 @@ class MainWindow(ctk.CTk):
             self.auto_settings.grid_columnconfigure(1, weight=1)
             self.auto_settings.grid_columnconfigure(2, weight=1)
             self.auto_settings.grid_columnconfigure(3, weight=1)
+            self.auto_settings.grid_columnconfigure(4, weight=1)
+            self.auto_settings.grid_columnconfigure(5, weight=1)
+
 
         # if it has already been created, open the screen
         else:
@@ -283,7 +290,6 @@ class MainWindow(ctk.CTk):
             self.control_plots = ctk.CTkToplevel(self)
             # title and geomety of the settings screen
             self.control_plots.title("Control Plots")
-            # self.control_plots.geometry('%dx%d+%d+%d' % (self.w, self.h, self.x, self.y))
 
             # create a single figure with two subplots
             self.control_fig, (self.control_spo2_ax, self.control_valve_ax) = plt.subplots(2, 1, figsize=(4, 3))
@@ -291,17 +297,17 @@ class MainWindow(ctk.CTk):
 
             # customize the spo2 subplot
             self.control_spo2_line, = self.control_spo2_ax.plot([], [], "#9eccf4")
-            self.control_spo2_ax.set_title('Spo2', fontsize=10)
-            self.control_spo2_ax.set_xlabel('Time', fontsize=7)
-            self.control_spo2_ax.set_ylabel('Spo2', fontsize=7)
+            self.control_spo2_ax.set_title('Spo2', fontname='Courier', fontsize=10)
+            self.control_spo2_ax.set_xlabel('Time', fontname='Courier', fontsize=7)
+            self.control_spo2_ax.set_ylabel('Spo2', fontname='Courier', fontsize=7)
             self.control_spo2_ax.set_xlim(0, 100)
             self.control_spo2_ax.set_ylim(-1, 1)
 
             # customize the valve subplot
             self.control_valve_line, = self.control_valve_ax.plot([], [], "#9eccf4")
-            self.control_valve_ax.set_title('Valve % Open', fontsize=10)
-            self.control_valve_ax.set_xlabel('Time', fontsize=7)
-            self.control_valve_ax.set_ylabel('Valve Open', fontsize=7)
+            self.control_valve_ax.set_title('Valve % Open', fontname='Courier', fontsize=10)
+            self.control_valve_ax.set_xlabel('Time', fontname='Courier', fontsize=7)
+            self.control_valve_ax.set_ylabel('Valve Open', fontname='Courier', fontsize=7)
             self.control_valve_ax.set_xlim(0, 100)
             self.control_valve_ax.set_ylim(0, 100)
 
@@ -313,7 +319,7 @@ class MainWindow(ctk.CTk):
             self.control_canvas.get_tk_widget().grid(column=0, row=0, pady=10, padx=10)
 
             # close button
-            self.close_control_button = ctk.CTkButton(master=self.control_plots, text="Close", text_color="white", fg_color="#878788", corner_radius=4, command=lambda: self.close_window(self.control_plots))
+            self.close_control_button = ctk.CTkButton(master=self.control_plots, text="Close",  font=self.font, text_color="white", fg_color="#878788", corner_radius=4, command=lambda: self.close_window(self.control_plots))
             self.close_control_button.grid(column=0, row=1, pady=10, padx=10)
 
             # widgets fitted properly to the window
@@ -361,46 +367,46 @@ class MainWindow(ctk.CTk):
 
             # creating the widgets for the pop up screen and displaying them using a grid
             # mode and discription - will change for each mode
-            self.m_mode = ctk.CTkLabel(self.manual_settings, text = "     MANUAL     ", text_color="white")
+            self.m_mode = ctk.CTkLabel(self.manual_settings, text = "     Manual     ", font=self.font, text_color="white")
             self.m_mode.grid(column=0, row=0, padx=5, pady=10, sticky="ew")
-            self.m_description = ctk.CTkLabel(self.manual_settings, text = "DESCRIPTION", text_color="white")
+            self.m_description = ctk.CTkLabel(self.manual_settings, text = "DESCRIPTION", font=self.font, text_color="white")
             self.m_description.grid(column=0, row=1, padx=5, pady=10, sticky="ew")
             
             # spo2 inputs
-            self.m_min_spo2_label = ctk.CTkLabel(self.manual_settings, text = "  Min Spo2  ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.m_min_spo2_label = ctk.CTkLabel(self.manual_settings, text = "  Min Spo2  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_min_spo2_label.grid(column=0, row=3, padx=4, pady=10, sticky="ew")
             self.m_min_spo2_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_min_spo2_input.grid(column=1, row=3, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.m_min_spo2_input)
             
-            self.m_max_spo2_label = ctk.CTkLabel(self.manual_settings, text = "  Max Spo2  ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.m_max_spo2_label = ctk.CTkLabel(self.manual_settings, text = "  Max Spo2  ", font=self.font2, text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_max_spo2_label.grid(column=0, row=4, padx=4, pady=10, sticky="ew")
             self.m_max_spo2_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_max_spo2_input.grid(column=1, row=4, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.m_max_spo2_input)
         
             # flow rate inputs
-            self.m_set_flow_rate_label = ctk.CTkLabel(self.manual_settings, text = "  Flow Rate  ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.m_set_flow_rate_label = ctk.CTkLabel(self.manual_settings, text = "  Flow Rate  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_set_flow_rate_label.grid(column=2, row=3, padx=4, pady=10, sticky="ew")
             self.m_set_flow_rate_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_set_flow_rate_input.grid(column=3, row=3, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.m_set_flow_rate_input)
             
             # pulse inputs
-            self.m_min_pulse_label = ctk.CTkLabel(self.manual_settings, text = "    Min Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.m_min_pulse_label = ctk.CTkLabel(self.manual_settings, text = "  Min Pulse  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_min_pulse_label.grid(column=5, row=3, padx=4, pady=10, sticky="ew")
             self.m_min_pulse_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_min_pulse_input.grid(column=6, row=3, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.m_min_pulse_input)
             
-            self.m_max_pulse_label = ctk.CTkLabel(self.manual_settings, text = "    Max Pulse    ", text_color="black", fg_color="#9eccf4", corner_radius=4)
+            self.m_max_pulse_label = ctk.CTkLabel(self.manual_settings, text = "  Max Pulse  ", font=self.font2,  text_color="black", fg_color="#9eccf4", corner_radius=4)
             self.m_max_pulse_label.grid(column=5, row=4, padx=4, pady=10, sticky="ew")
             self.m_max_pulse_input = ctk.CTkEntry(self.manual_settings, width=100)
             self.m_max_pulse_input.grid(column=6, row=4, padx=4, pady=10, sticky="ew")
             self.bind_entry_to_keypad(self.m_max_pulse_input)
 
             # save button - sends the inputted values to the device and exits the self.manual_settings screen
-            self.m_save_button = ctk.CTkButton(self.manual_settings, text = "SAVE", text_color="white", fg_color="#878788", corner_radius=4, command=self.save_manual_variables)
+            self.m_save_button = ctk.CTkButton(self.manual_settings, text = "Save", text_color="white", font=self.font2,  fg_color="#878788", corner_radius=4, command=self.save_manual_variables)
             self.m_save_button.grid(column=5, row=6, columnspan=2, pady=10, sticky="ew")
 
             # text box for error messages

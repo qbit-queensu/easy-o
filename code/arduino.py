@@ -45,17 +45,17 @@ class ArduinoThread():
                     for item in readings:
                         letter, value = item.split(":")
                         if letter == "O":
-                            self.spo2 = (float(value))
+                            self.spo2 = round(float(value), 3)
                         elif letter == "F":
-                            self.fr = (int(value))
+                            self.fr = round(float(value), 3)
                         elif letter == "P":
-                            self.pulse = (int(value))
+                            self.pulse = round(float(value), 3)
                     
                     # change the values in the mainwindow
                     self.mainwindow.current_spo2(self.spo2)
-                    self.mainwindow.spo2_label.configure(text=self.spo2)
-                    self.mainwindow.fr_label.configure(text=self.fr)
-                    self.mainwindow.pulse_label.configure(text=self.pulse)
+                    self.mainwindow.spo2_label.configure(text=f'Spo2: {self.spo2}')
+                    self.mainwindow.fr_label.configure(text=f'Flowrate: {self.fr}')
+                    self.mainwindow.pulse_label.configure(text=f'Pulse: {self.pulse}')
 
     # fucntion to send a value back to the Arduino
     def write_to_arduino(self, value):
